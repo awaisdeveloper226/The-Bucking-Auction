@@ -1,6 +1,8 @@
 // app/about/page.tsx  (Next.js App Router)
 // or pages/about.tsx (Next.js Pages Router)
 
+import Link from "next/link";
+
 export default function AboutPage() {
   return (
     <main className="min-h-screen bg-[#F5F8F7] text-gray-800">
@@ -59,12 +61,12 @@ export default function AboutPage() {
         <p className="text-lg mb-6 opacity-90">
           Whether you’re a buyer, seller, or just curious, we’d love to have you onboard.
         </p>
-        <a
-          href="/signup"
+        <Link
+          href="/register"
           className="inline-block bg-[#00AEB4] hover:bg-[#007A80] text-white font-medium px-8 py-3 rounded-lg shadow-lg transition"
         >
           Get Started
-        </a>
+        </Link>
       </section>
     </main>
   );

@@ -1,5 +1,6 @@
 // app/past-auctions/page.jsx
 import Image from "next/image";
+import Link from "next/link";
 
 export default function PastAuctionsPage() {
   // Example past auctions (static for now — later from DB)
@@ -8,7 +9,7 @@ export default function PastAuctionsPage() {
       id: 1,
       title: "Spring Ranch Dispersal",
       date: "March 15, 2025",
-      flyer: "/images/banners/past1.jpg",
+      flyer: "/images/past1.jpeg",
       location: "Hilltop Ranch, Kansas",
       description:
         "A complete dispersal of Hilltop Ranch’s cattle herd, with outstanding results for breeders and buyers alike.",
@@ -18,7 +19,7 @@ export default function PastAuctionsPage() {
       id: 2,
       title: "Midwest Angus Showcase",
       date: "January 28, 2025",
-      flyer: "/images/banners/past2.jpg",
+      flyer: "/images/past2.jpeg",
       location: "Midwest Expo Center, Illinois",
       description:
         "A prestigious sale featuring high-quality Angus cattle with exceptional pedigrees.",
@@ -49,7 +50,7 @@ export default function PastAuctionsPage() {
               alt={auction.title}
               width={800}
               height={500}
-              className="w-full h-72 object-cover"
+              className="w-full h-72 object-contain"
             />
 
             {/* Auction Info */}
@@ -63,14 +64,14 @@ export default function PastAuctionsPage() {
 
               {/* Results Link */}
               {auction.resultsLink && (
-                <a
+                <Link
                   href={auction.resultsLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-block mt-4 bg-[#335566] text-white px-4 py-2 rounded hover:bg-[#224455] transition"
                 >
                   View Results
-                </a>
+                </Link>
               )}
             </div>
           </div>

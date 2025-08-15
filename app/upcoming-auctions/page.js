@@ -9,7 +9,7 @@ export default function UpcomingAuctionsPage() {
       title: "Carsen Perry Legacy Fund Auction",
       date: "September 12, 2025",
       time: "6:00 PM CST",
-      flyer: "/images/banners/auction1.jpg",
+      flyer: "/images/upcoming1.jpeg",
       location: "Perry Ranch, Texas",
       description: "A special auction event supporting the Carsen Perry Legacy Fund. Featuring top-quality livestock from leading breeders."
     },
@@ -18,7 +18,7 @@ export default function UpcomingAuctionsPage() {
       title: "Fall Elite Bull Sale",
       date: "October 3, 2025",
       time: "5:00 PM CST",
-      flyer: "/images/banners/auction2.jpg",
+      flyer: "/images/upcoming2.jpeg",
       location: "Lone Star Cattle Co., Oklahoma",
       description: "Elite selection of registered bulls ready for breeding programs."
     }
@@ -45,7 +45,7 @@ export default function UpcomingAuctionsPage() {
               alt={auction.title}
               width={800}
               height={500}
-              className="w-full h-72 object-cover"
+              className="w-full h-72 object-contain"
             />
 
             {/* Auction Info */}

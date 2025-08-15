@@ -28,7 +28,7 @@ export default function Navbar() {
           <div className="flex items-center space-x-3">
             <Link href="/" className="flex items-center space-x-2">
               <Image
-                src="/images/logo.png"
+                src="/images/favicon.png"
                 alt="The Bucking Auction"
                 width={45}
                 height={45}

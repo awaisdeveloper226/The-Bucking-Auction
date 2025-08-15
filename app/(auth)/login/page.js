@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -41,9 +43,9 @@ export default function LoginPage() {
               <input type="checkbox" className="w-4 h-4" />
               <span>Remember me</span>
             </label>
-            <a href="#" className="text-sm text-blue-600 hover:underline">
+            <Link href="#" className="text-sm text-blue-600 hover:underline">
               Forgot password?
-            </a>
+            </Link>
           </div>
 
           <button
@@ -56,9 +58,9 @@ export default function LoginPage() {
 
         <p className="mt-6 text-center text-gray-600 text-sm">
           Don’t have an account?{" "}
-          <a href="/signup" className="text-blue-600 hover:underline">
+          <Link href="/register" className="text-blue-600 hover:underline">
             Sign up
-          </a>
+          </Link>
         </p>
       </div>
     </div>
