@@ -6,22 +6,13 @@ export default function UpcomingAuctionsPage() {
   const upcomingAuctions = [
     {
       id: 1,
-      title: "Carsen Perry Legacy Fund Auction",
-      date: "September 12, 2025",
-      time: "6:00 PM CST",
+      title: "Carsen Perry Auction",
+
       flyer: "/images/upcoming1.jpeg",
-      location: "Perry Ranch, Texas",
-      description: "A special auction event supporting the Carsen Perry Legacy Fund. Featuring top-quality livestock from leading breeders."
+
+      description:
+        "Keep the Carsen Perry Legacy alive. Donate and bid on heifers, bulls , semen and more.",
     },
-    {
-      id: 2,
-      title: "Fall Elite Bull Sale",
-      date: "October 3, 2025",
-      time: "5:00 PM CST",
-      flyer: "/images/upcoming2.jpeg",
-      location: "Lone Star Cattle Co., Oklahoma",
-      description: "Elite selection of registered bulls ready for breeding programs."
-    }
   ];
 
   return (
@@ -50,9 +41,11 @@ export default function UpcomingAuctionsPage() {
 
             {/* Auction Info */}
             <div className="p-6">
-              <h2 className="text-2xl font-bold text-[#335566]">{auction.title}</h2>
+              <h2 className="text-2xl font-bold text-[#335566]">
+                {auction.title}
+              </h2>
               <p className="text-gray-500 mt-1">
-                {auction.date} — {auction.time}
+                {auction.date} {auction.time}
               </p>
               <p className="text-gray-500 italic">{auction.location}</p>
               <p className="mt-4 text-gray-700">{auction.description}</p>
