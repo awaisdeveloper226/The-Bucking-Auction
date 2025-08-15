@@ -1,0 +1,81 @@
+// app/past-auctions/page.jsx
+import Image from "next/image";
+
+export default function PastAuctionsPage() {
+  // Example past auctions (static for now — later from DB)
+  const pastAuctions = [
+    {
+      id: 1,
+      title: "Spring Ranch Dispersal",
+      date: "March 15, 2025",
+      flyer: "/images/banners/past1.jpg",
+      location: "Hilltop Ranch, Kansas",
+      description:
+        "A complete dispersal of Hilltop Ranch’s cattle herd, with outstanding results for breeders and buyers alike.",
+      resultsLink: "/pdfs/spring-ranch-results.pdf",
+    },
+    {
+      id: 2,
+      title: "Midwest Angus Showcase",
+      date: "January 28, 2025",
+      flyer: "/images/banners/past2.jpg",
+      location: "Midwest Expo Center, Illinois",
+      description:
+        "A prestigious sale featuring high-quality Angus cattle with exceptional pedigrees.",
+      resultsLink: "/pdfs/midwest-angus-results.pdf",
+    },
+  ];
+
+  return (
+    <div className="bg-white min-h-screen">
+      {/* Header */}
+      <section className="bg-[#335566] text-white py-10 text-center">
+        <h1 className="text-3xl md:text-4xl font-bold">Past Auctions</h1>
+        <p className="mt-2 text-lg">
+          Browse our auction history and view results
+        </p>
+      </section>
+
+      {/* Past Auction List */}
+      <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-2 gap-10">
+        {pastAuctions.map((auction) => (
+          <div
+            key={auction.id}
+            className="border rounded-lg overflow-hidden shadow hover:shadow-lg transition"
+          >
+            {/* Flyer */}
+            <Image
+              src={auction.flyer}
+              alt={auction.title}
+              width={800}
+              height={500}
+              className="w-full h-72 object-cover"
+            />
+
+            {/* Auction Info */}
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-[#335566]">
+                {auction.title}
+              </h2>
+              <p className="text-gray-500 mt-1">{auction.date}</p>
+              <p className="text-gray-500 italic">{auction.location}</p>
+              <p className="mt-4 text-gray-700">{auction.description}</p>
+
+              {/* Results Link */}
+              {auction.resultsLink && (
+                <a
+                  href={auction.resultsLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-4 bg-[#335566] text-white px-4 py-2 rounded hover:bg-[#224455] transition"
+                >
+                  View Results
+                </a>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
