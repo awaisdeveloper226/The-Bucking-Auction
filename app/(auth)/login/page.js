@@ -1,68 +1,121 @@
-import Link from "next/link";
+"use client";
+import { useState } from "react";
 
 export default function LoginPage() {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    role: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    if (!formData.role) {
+      return alert("Please select a role before logging in.");
+    }
+
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      if (formData.role === "admin") window.location.href = "/admin/dashboard";
+      if (formData.role === "buyer") window.location.href = "/buyer/dashboard";
+      if (formData.role === "seller") window.location.href = "/seller/dashboard";
+    } else {
+      alert(data.message || "Login failed");
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-lg">
+    <main className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
-          Welcome Back
+          Login to Dashboard
         </h2>
-        <form className="space-y-5">
+
+        <form onSubmit={handleLogin} className="space-y-5">
+          {/* Role Selection */}
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-600"
-            >
+            <label className="block text-gray-700 font-medium mb-2">
+              Select Role
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {["buyer", "seller", "admin"].map((role) => (
+                <button
+                  type="button"
+                  key={role}
+                  onClick={() => setFormData({ ...formData, role })}
+                  className={`py-2 rounded-lg border font-semibold capitalize
+                    ${
+                      formData.role === role
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                >
+                  {role}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">
               Email Address
             </label>
             <input
               type="email"
-              id="email"
+              name="email"
               placeholder="Enter your email"
-              className="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
+          {/* Password */}
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-600"
-            >
+            <label className="block text-gray-700 font-medium mb-2">
               Password
             </label>
             <input
               type="password"
-              id="password"
+              name="password"
               placeholder="Enter your password"
-              className="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <label className="flex items-center space-x-2 text-sm text-gray-600">
-              <input type="checkbox" className="w-4 h-4" />
-              <span>Remember me</span>
-            </label>
-            <Link href="#" className="text-sm text-blue-600 hover:underline">
-              Forgot password?
-            </Link>
-          </div>
-
+          {/* Login Button */}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition"
           >
             Login
           </button>
         </form>
 
-        <p className="mt-6 text-center text-gray-600 text-sm">
+        <p className="text-center text-gray-500 text-sm mt-6">
           Don’t have an account?{" "}
-          <Link href="/register" className="text-blue-600 hover:underline">
-            Sign up
-          </Link>
+          <a href="/signup" className="text-blue-600 font-medium hover:underline">
+            Sign Up
+          </a>
         </p>
       </div>
-    </div>
+    </main>
   );
 }

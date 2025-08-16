@@ -1,12 +1,17 @@
+"use client";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function SignupPage() {
+  const [role, setRole] = useState("buyer");
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-lg">
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
           Create an Account
         </h2>
+
         <form className="space-y-5">
           <div>
             <label
@@ -66,6 +71,25 @@ export default function SignupPage() {
               placeholder="Confirm your password"
               className="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          {/* Role Selection */}
+          <div>
+            <label
+              htmlFor="role"
+              className="block text-sm font-medium text-gray-600"
+            >
+              Select Role
+            </label>
+            <select
+              id="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="buyer">Buyer</option>
+              <option value="seller">Seller</option>
+            </select>
           </div>
 
           <button
