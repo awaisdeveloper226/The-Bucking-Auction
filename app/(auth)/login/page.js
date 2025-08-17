@@ -1,12 +1,13 @@
 "use client";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function LoginPage() {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    role: "",
-  });
+  const router = useRouter();
+  const [formData, setFormData] = useState({ email: "", password: "", role: "" });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ text: "", type: "" });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -14,25 +15,37 @@ export default function LoginPage() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
     if (!formData.role) {
-      return alert("Please select a role before logging in.");
+      setMessage({ text: "Please select a role.", type: "error" });
+      return;
     }
 
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
+    setLoading(true);
+    setMessage({ text: "", type: "" });
 
-    const data = await res.json();
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-    if (data.success) {
-      if (formData.role === "admin") window.location.href = "/admin/dashboard";
-      if (formData.role === "buyer") window.location.href = "/buyer/dashboard";
-      if (formData.role === "seller") window.location.href = "/seller/dashboard";
-    } else {
-      alert(data.message || "Login failed");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Login failed");
+
+      if (data.success) {
+        // Save userId in localStorage
+        localStorage.setItem("userId", data.user.id);
+
+        // Redirect immediately after saving
+        router.replace(`/${data.user.role}/${data.user.id}`);
+      } else {
+        setMessage({ text: data.message || "Invalid credentials", type: "error" });
+      }
+    } catch (err) {
+      setMessage({ text: err.message || "Something went wrong.", type: "error" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,18 +57,15 @@ export default function LoginPage() {
         </h2>
 
         <form onSubmit={handleLogin} className="space-y-5">
-          {/* Role Selection */}
           <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Select Role
-            </label>
+            <label className="block text-gray-700 font-medium mb-2">Select Role</label>
             <div className="grid grid-cols-3 gap-3">
               {["buyer", "seller", "admin"].map((role) => (
                 <button
                   type="button"
                   key={role}
                   onClick={() => setFormData({ ...formData, role })}
-                  className={`py-2 rounded-lg border font-semibold capitalize
+                  className={`py-2 rounded-lg border font-semibold capitalize transition
                     ${
                       formData.role === role
                         ? "bg-blue-600 text-white border-blue-600"
@@ -68,11 +78,8 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Email */}
           <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Email Address
-            </label>
+            <label className="block text-gray-700 font-medium mb-2">Email</label>
             <input
               type="email"
               name="email"
@@ -84,11 +91,8 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Password */}
           <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Password
-            </label>
+            <label className="block text-gray-700 font-medium mb-2">Password</label>
             <input
               type="password"
               name="password"
@@ -100,20 +104,32 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Login Button */}
+          {message.text && (
+            <p
+              className={`text-sm font-medium text-center ${
+                message.type === "error" ? "text-red-600" : "text-green-600"
+              }`}
+            >
+              {message.text}
+            </p>
+          )}
+
           <button
             type="submit"
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition"
+            disabled={loading}
+            className={`w-full py-3 rounded-lg shadow-md font-semibold transition ${
+              loading ? "bg-blue-400 cursor-not-allowed text-white" : "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
         <p className="text-center text-gray-500 text-sm mt-6">
           Don’t have an account?{" "}
-          <a href="/signup" className="text-blue-600 font-medium hover:underline">
+          <Link href="/register" className="text-blue-600 font-medium hover:underline">
             Sign Up
-          </a>
+          </Link>
         </p>
       </div>
     </main>
