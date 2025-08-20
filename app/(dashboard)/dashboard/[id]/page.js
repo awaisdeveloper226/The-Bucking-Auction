@@ -45,6 +45,18 @@ export default function BuyerDashboard({ params }) {
     fetchProfile();
   }, [id, router]);
 
+  // 🚀 Lock body scroll when sidebar is open (mobile only)
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [sidebarOpen]);
+
   const handleLogout = () => {
     localStorage.removeItem("userId");
     router.replace("/login");
@@ -84,7 +96,9 @@ export default function BuyerDashboard({ params }) {
       <div className="min-h-screen flex justify-center items-center bg-gray-50 px-4 py-8">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-base sm:text-lg">Loading dashboard...</p>
+          <p className="text-gray-600 text-base sm:text-lg">
+            Loading dashboard...
+          </p>
         </div>
       </div>
     );
@@ -100,7 +114,9 @@ export default function BuyerDashboard({ params }) {
           <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
             Access Error
           </h2>
-          <p className="text-red-600 mb-4 sm:mb-6 text-sm sm:text-base">{error || "Profile not found."}</p>
+          <p className="text-red-600 mb-4 sm:mb-6 text-sm sm:text-base">
+            {error || "Profile not found."}
+          </p>
           <button
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition text-sm sm:text-base"
@@ -125,13 +141,15 @@ export default function BuyerDashboard({ params }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 w-64 sm:w-72 lg:w-64 xl:w-72 bg-white shadow-lg flex flex-col transform transition-transform duration-300 ease-in-out z-50 lg:z-auto lg:translate-x-0 ${
+        className={`fixed lg:sticky top-0 left-0 h-full lg:h-screen w-64 sm:w-72 lg:w-64 xl:w-72 bg-white shadow-lg flex flex-col transform transition-transform duration-300 ease-in-out z-50 lg:z-auto lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:mt-0 mt-16 lg:mb-0 mb-20`}
+        }`}
       >
         {/* Sidebar Header */}
         <div className="flex justify-between items-center p-3 sm:p-4 border-b lg:hidden">
-          <h2 className="text-base sm:text-lg font-bold text-blue-600">Dashboard</h2>
+          <h2 className="text-base sm:text-lg font-bold text-blue-600">
+            Dashboard
+          </h2>
           <button
             onClick={() => setSidebarOpen(false)}
             className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg"
@@ -141,7 +159,9 @@ export default function BuyerDashboard({ params }) {
         </div>
 
         <div className="hidden lg:block p-4 xl:p-6 border-b">
-          <h2 className="text-xl xl:text-2xl font-bold text-blue-600">Buyer Dashboard</h2>
+          <h2 className="text-xl xl:text-2xl font-bold text-blue-600">
+            Buyer Dashboard
+          </h2>
         </div>
 
         {/* Navigation */}
@@ -203,7 +223,10 @@ export default function BuyerDashboard({ params }) {
               </h1>
             </div>
             <button className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg flex-shrink-0">
-              <User size={16} className="sm:w-[18px] sm:h-[18px] text-gray-600" />
+              <User
+                size={16}
+                className="sm:w-[18px] sm:h-[18px] text-gray-600"
+              />
             </button>
           </div>
         </div>
@@ -246,8 +269,12 @@ export default function BuyerDashboard({ params }) {
                           {value}
                         </p>
                       </div>
-                      <div className={`p-1.5 sm:p-2 bg-${color}-100 rounded-lg flex-shrink-0 ml-2`}>
-                        <Icon className={`h-4 w-4 sm:h-5 sm:w-5 xl:h-6 xl:w-6 text-${color}-600`} />
+                      <div
+                        className={`p-1.5 sm:p-2 bg-${color}-100 rounded-lg flex-shrink-0 ml-2`}
+                      >
+                        <Icon
+                          className={`h-4 w-4 sm:h-5 sm:w-5 xl:h-6 xl:w-6 text-${color}-600`}
+                        />
                       </div>
                     </div>
                   </div>
