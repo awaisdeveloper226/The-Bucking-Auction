@@ -63,7 +63,7 @@ export default function SignupPage() {
           {["firstName","lastName","cellPhone","emailAddress","physicalAddress"].map((field) => (
             <div key={field}>
               <label className="block text-sm font-medium text-gray-600 capitalize">
-                {field.replace("cellPhone","Cell Phone").replace("emailAddress","Email").replace("physicalAddress","Address")}
+                {field.replace("cellPhone","Cell Phone").replace("emailAddress","Email").replace("physicalAddress","Address").replace("firstName","First Name").replace("lastName","Last Name")}
               </label>
               <input
                 type={field.includes("email") ? "email" : "text"}
