@@ -9,7 +9,7 @@ export default function ServicesPage() {
         <div className="max-w-6xl mx-auto px-4 text-center">
           <h1 className="text-4xl font-bold mb-4">Our Services</h1>
           <p className="text-lg text-gray-200 max-w-3xl mx-auto">
-            At The Bucking Auction, we provide a seamless platform for buyers and sellers to connect through live auctions.
+            At The Bucking Auction, we provide a seamless platform for buyers to connect through live auctions.
           </p>
         </div>
       </section>
