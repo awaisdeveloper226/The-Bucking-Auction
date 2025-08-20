@@ -21,7 +21,7 @@ export default function ServicesPage() {
         <div className="bg-white shadow-lg rounded-lg p-6 text-center border-t-4 border-[#6ED0CE] hover:shadow-2xl transition duration-300">
           <h2 className="text-xl font-semibold mb-4">Live Auctions</h2>
           <p className="text-gray-600">
-            Experience the excitement of real-time bidding with live updates and a smooth user interface for buyers and sellers.
+            Experience the excitement of real-time bidding with live updates and a smooth user interface for buyers.
           </p>
         </div>
 

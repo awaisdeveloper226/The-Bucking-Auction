@@ -65,7 +65,7 @@ export default function AboutPage() {
       <section className="py-20 px-6 md:px-16 bg-gradient-to-r from-[#0A0F2C] to-[#1D4ED8] text-white text-center rounded-t-3xl">
         <h2 className="text-3xl md:text-4xl font-bold mb-4">Join Our Growing Community</h2>
         <p className="text-lg mb-6 opacity-90">
-          Whether you’re a buyer, seller, or simply curious, we’d love to have you onboard.
+          We would love to have you onboard.
         </p>
         <Link
           href="/register"
