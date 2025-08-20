@@ -13,7 +13,7 @@ export default function AboutPage() {
             About Us
           </h1>
           <p className="text-lg md:text-xl opacity-90 max-w-2xl mx-auto animate-fadeIn delay-200">
-            At <span className="font-semibold">The Bucking Auction</span>, we connect buyers and sellers with our unique marketing techniques, supporting the <span className="font-semibold">bucking bull industry</span> while valuing every participant – the breeder, the buyer, the competitor, the partner, and the fan.
+            At <span className="font-semibold">The Bucking Auction</span>, we connect buyers with our unique marketing techniques, supporting the <span className="font-semibold">bucking bull industry</span> while valuing every participant – the breeder, the buyer, the competitor, the partner, and the fan.
           </p>
         </div>
 
