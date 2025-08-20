@@ -25,13 +25,7 @@ export default function ServicesPage() {
           </p>
         </div>
 
-        {/* Service Card 2 */}
-        <div className="bg-white shadow-lg rounded-lg p-6 text-center border-t-4 border-[#6ED0CE] hover:shadow-2xl transition duration-300">
-          <h2 className="text-xl font-semibold mb-4">Seller Dashboard</h2>
-          <p className="text-gray-600">
-            Manage your lots, track bidding activity, and control your auctions all from one easy-to-use seller dashboard.
-          </p>
-        </div>
+        
 
         {/* Service Card 3 */}
         <div className="bg-white shadow-lg rounded-lg p-6 text-center border-t-4 border-[#6ED0CE] hover:shadow-2xl transition duration-300">
