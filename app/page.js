@@ -89,24 +89,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Seller CTA */}
-      <section className="bg-[#f3f8f8] py-20 text-center">
-        <div className="max-w-2xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-[#335566]">
-            Sell with The Bucking Auction
-          </h2>
-          <p className="mt-4 text-gray-600">
-            Reach verified buyers across the country and secure the best price
-            for your livestock.
-          </p>
-          <Link
-            href="/register"
-            className="mt-8 inline-block bg-[#6ED0CE] px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl hover:bg-[#4DB1B1] hover:scale-105 transition"
-          >
-            Become a Seller
-          </Link>
-        </div>
-      </section>
+   
     </div>
   );
 }
