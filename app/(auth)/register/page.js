@@ -5,19 +5,21 @@ import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
   const router = useRouter();
-  const [role, setRole] = useState("buyer");
   const [form, setForm] = useState({
-    name: "",
-    email: "",
+    firstName: "",
+    lastName: "",
+    cellPhone: "",
+    emailAddress: "",
+    physicalAddress: "",
     password: "",
     confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
-  const [successData, setSuccessData] = useState(null); // stores user info for modal
+  const [successData, setSuccessData] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
   const handleChange = (e) =>
-    setForm((p) => ({ ...p, [e.target.id]: e.target.value }));
+    setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,27 +32,17 @@ export default function SignupPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          password: form.password,
-          role,
-        }),
+        body: JSON.stringify(form),
       });
 
       const data = await res.json();
-
       if (!res.ok) {
         alert(data.message || "Registration failed");
         setLoading(false);
         return;
       }
 
-      // ✅ Store data & show success modal
-      setSuccessData({
-        role,
-        biddingNumber: data?.user?.biddingNumber,
-      });
+      setSuccessData({ biddingNumber: data?.user?.biddingNumber });
       setShowModal(true);
     } catch (err) {
       console.error(err);
@@ -68,52 +60,28 @@ export default function SignupPage() {
         </h2>
 
         <form className="space-y-5" onSubmit={handleSubmit}>
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-600"
-            >
-              Full Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Enter your full name"
-              required
-              className="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+          {["firstName","lastName","cellPhone","emailAddress","physicalAddress"].map((field) => (
+            <div key={field}>
+              <label className="block text-sm font-medium text-gray-600 capitalize">
+                {field.replace("cellPhone","Cell Phone").replace("emailAddress","Email").replace("physicalAddress","Address")}
+              </label>
+              <input
+                type={field.includes("email") ? "email" : "text"}
+                name={field}
+                value={form[field]}
+                onChange={handleChange}
+                placeholder={`Enter your ${field}`}
+                required
+                className="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          ))}
 
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-600"
-            >
-              Email Address
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              required
-              className="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-600"
-            >
-              Password
-            </label>
+            <label className="block text-sm font-medium text-gray-600">Password</label>
             <input
               type="password"
-              id="password"
+              name="password"
               value={form.password}
               onChange={handleChange}
               placeholder="Enter your password"
@@ -124,15 +92,10 @@ export default function SignupPage() {
           </div>
 
           <div>
-            <label
-              htmlFor="confirmPassword"
-              className="block text-sm font-medium text-gray-600"
-            >
-              Confirm Password
-            </label>
+            <label className="block text-sm font-medium text-gray-600">Confirm Password</label>
             <input
               type="password"
-              id="confirmPassword"
+              name="confirmPassword"
               value={form.confirmPassword}
               onChange={handleChange}
               placeholder="Confirm your password"
@@ -141,32 +104,11 @@ export default function SignupPage() {
             />
           </div>
 
-          {/* Role Selection */}
-          <div>
-            <label
-              htmlFor="role"
-              className="block text-sm font-medium text-gray-600"
-            >
-              Select Role
-            </label>
-            <select
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="buyer">Buyer</option>
-              <option value="seller">Seller</option>
-            </select>
-          </div>
-
           <button
             type="submit"
             disabled={loading}
             className={`w-full text-white py-2 rounded-lg transition ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-600 hover:bg-green-700"
+              loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
             }`}
           >
             {loading ? "Creating account..." : "Sign Up"}
@@ -181,24 +123,24 @@ export default function SignupPage() {
         </p>
       </div>
 
-      {/* ✅ Success Modal */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50">
           <div className="bg-white p-8 rounded-2xl shadow-lg text-center w-96 animate-fadeIn">
             <h3 className="text-2xl font-bold text-green-600 mb-4">
               🎉 Registration Successful!
             </h3>
-            <p className="text-gray-700 mb-2">
-              Welcome, <b>{role}</b>!
-            </p>
             <p className="text-gray-600 mb-4">
-              Please check your email inbox to verify your account before
-              logging in.
+              Please check your email inbox to verify your account before logging in.
             </p>
             {successData?.biddingNumber && (
-              <p className="text-lg font-semibold text-blue-600">
-                Your Bidding Number: {successData.biddingNumber}
-              </p>
+              <>
+                <p className="text-lg font-semibold text-blue-600 mb-2">
+                  Your Bidding Number: {successData.biddingNumber}
+                </p>
+                <p className="text-xs text-gray-500 mt-2">
+                  By accepting a bidder’s number, you agree to our auction terms.
+                </p>
+              </>
             )}
             <button
               onClick={() => {

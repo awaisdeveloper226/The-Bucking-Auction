@@ -1,4 +1,3 @@
-
 import bcrypt from "bcryptjs";
 import { connectToDB } from "@/lib/mongodb";
 import User from "@/models/User";
@@ -6,51 +5,35 @@ import User from "@/models/User";
 export async function POST(req) {
   try {
     await connectToDB();
-    const { email, password, role } = await req.json();
+    const { emailAddress, password } = await req.json();
 
-    const user = await User.findOne({ email, role });
+    const user = await User.findOne({ emailAddress });
     if (!user) {
-      return new Response(
-        JSON.stringify({ success: false, message: "User not found" }),
-        { status: 400 }
-      );
+      return new Response(JSON.stringify({ success: false, message: "User not found" }), { status: 400 });
     }
 
     if (!user.isVerified) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Please verify your email first." }),
-        { status: 403 }
-      );
+      return new Response(JSON.stringify({ success: false, message: "Please verify your email first." }), { status: 403 });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Invalid credentials" }),
-        { status: 401 }
-      );
+      return new Response(JSON.stringify({ success: false, message: "Invalid credentials" }), { status: 401 });
     }
 
-    // Clean user object
     const safeUser = {
       id: user._id.toString(),
-      name: user.name,
-      email: user.email,
-      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      cellPhone: user.cellPhone,
+      emailAddress: user.emailAddress,
+      physicalAddress: user.physicalAddress,
+      biddingNumber: user.biddingNumber,
     };
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        user: safeUser,
-      }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ success: true, user: safeUser }), { status: 200 });
   } catch (err) {
     console.error("Login API Error:", err);
-    return new Response(
-      JSON.stringify({ success: false, message: "Server error" }),
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ success: false, message: "Server error" }), { status: 500 });
   }
 }

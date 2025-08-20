@@ -5,7 +5,7 @@ import { useState } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({ email: "", password: "", role: "" });
+  const [formData, setFormData] = useState({ emailAddress: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
 
@@ -15,11 +15,6 @@ export default function LoginPage() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!formData.role) {
-      setMessage({ text: "Please select a role.", type: "error" });
-      return;
-    }
-
     setLoading(true);
     setMessage({ text: "", type: "" });
 
@@ -34,11 +29,8 @@ export default function LoginPage() {
       if (!res.ok) throw new Error(data.message || "Login failed");
 
       if (data.success) {
-        // Save userId in localStorage
         localStorage.setItem("userId", data.user.id);
-
-        // Redirect immediately after saving
-        router.replace(`/${data.user.role}/${data.user.id}`);
+        router.replace(`/dashboard/${data.user.id}`);
       } else {
         setMessage({ text: data.message || "Invalid credentials", type: "error" });
       }
@@ -58,33 +50,12 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-gray-700 font-medium mb-2">Select Role</label>
-            <div className="grid grid-cols-3 gap-3">
-              {["buyer", "seller", "admin"].map((role) => (
-                <button
-                  type="button"
-                  key={role}
-                  onClick={() => setFormData({ ...formData, role })}
-                  className={`py-2 rounded-lg border font-semibold capitalize transition
-                    ${
-                      formData.role === role
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                >
-                  {role}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
             <label className="block text-gray-700 font-medium mb-2">Email</label>
             <input
               type="email"
-              name="email"
+              name="emailAddress"
               placeholder="Enter your email"
-              value={formData.email}
+              value={formData.emailAddress}
               onChange={handleChange}
               required
               className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"

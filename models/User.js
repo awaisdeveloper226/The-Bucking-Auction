@@ -2,8 +2,19 @@ import mongoose, { Schema } from "mongoose";
 
 const UserSchema = new Schema(
   {
-    name: { type: String, required: true, trim: true },
-    email: {
+    firstName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    lastName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    emailAddress: {
       type: String,
       required: true,
       unique: true,
@@ -11,17 +22,41 @@ const UserSchema = new Schema(
       trim: true,
       index: true,
     },
-    password: { type: String, required: true },
-    role: {
+
+    password: {
       type: String,
-      enum: ["buyer", "seller", "admin"],
-      default: "buyer",
       required: true,
+      minlength: 6,
     },
-    // Optional: give buyers a bidding number at signup
-    biddingNumber: { type: String, unique: true, sparse: true },
-    isVerified: { type: Boolean, default: false },
-    verificationToken: { type: String },
+
+    cellPhone: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    physicalAddress: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    biddingNumber: {
+      type: String,
+      unique: true,
+      sparse: true, // avoids unique conflict if null
+      index: true,
+    },
+
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    verificationToken: {
+      type: String,
+      index: true,
+    },
   },
   { timestamps: true }
 );

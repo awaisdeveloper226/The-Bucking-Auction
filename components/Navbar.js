@@ -1,13 +1,114 @@
-// app/components/Navbar.tsx
+// app/components/Navbar.js
 "use client";
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { Menu, X } from "lucide-react"; // prettier mobile icons
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { Menu, X } from "lucide-react";
+
+const TOKEN_KEY = "token";
+const USER_ID_KEY = "userId";
+
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const [auth, setAuth] = useState({ isLoggedIn: false, accountHref: "/account" });
+  const pathname = usePathname();
+  const bcRef = useRef(null);
+
+  const computeAuth = () => {
+    try {
+      const token = localStorage.getItem(TOKEN_KEY);
+      const userId = localStorage.getItem(USER_ID_KEY);
+      
+
+      const isLoggedIn = !!(token || userId);
+      const accountHref = userId  ? `/dashboard/${userId}` : "/account";
+
+      setAuth({ isLoggedIn, accountHref });
+    } catch {
+      setAuth({ isLoggedIn: false, accountHref: "/account" });
+    }
+  };
+
+  useEffect(() => {
+    computeAuth();
+    setHydrated(true);
+
+    // BroadcastChannel for robust cross-tab sync
+    try {
+      bcRef.current = new BroadcastChannel("auth");
+      bcRef.current.onmessage = computeAuth;
+    } catch {
+      bcRef.current = null;
+    }
+
+    // Storage (other tabs)
+    const onStorage = (e) => {
+      if ([TOKEN_KEY, USER_ID_KEY].includes(e.key)) computeAuth();
+    };
+    window.addEventListener("storage", onStorage);
+
+    // Custom in-tab event
+    const onAuthChange = () => computeAuth();
+    window.addEventListener("authChange", onAuthChange);
+
+    // Focus/visibility = cheap safety net
+    const onFocus = () => computeAuth();
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+
+    // Patch localStorage once so same-tab set/remove triggers updates automatically
+    if (!window.__authPatched__) {
+      window.__authPatched__ = true;
+      const _setItem = localStorage.setItem.bind(localStorage);
+      const _removeItem = localStorage.removeItem.bind(localStorage);
+
+      localStorage.setItem = (key, value) => {
+        const res = _setItem(key, value);
+        if ([TOKEN_KEY, USER_ID_KEY].includes(key)) {
+          try { window.dispatchEvent(new Event("authChange")); } catch {}
+          try { bcRef.current?.postMessage({ type: "changed" }); } catch {}
+        }
+        return res;
+      };
+
+      localStorage.removeItem = (key) => {
+        const res = _removeItem(key);
+        if ([TOKEN_KEY, USER_ID_KEY].includes(key)) {
+          try { window.dispatchEvent(new Event("authChange")); } catch {}
+          try { bcRef.current?.postMessage({ type: "changed" }); } catch {}
+        }
+        return res;
+      };
+    }
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("authChange", onAuthChange);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+      try { bcRef.current?.close(); } catch {}
+    };
+  }, []);
+
+  // Re-check on route change (covers router.replace after login)
+  useEffect(() => {
+    computeAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_ID_KEY);
+      
+      // Patched localStorage will auto-fire updates
+    } catch {}
+    setIsOpen(false);
+  };
 
   const navLinks = [
     { href: "/sale-ring", label: "Sale Ring" },
@@ -23,7 +124,6 @@ export default function Navbar() {
     <nav className="bg-[#2b3a4a] text-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          
           {/* Logo + Name */}
           <div className="flex items-center space-x-3">
             <Link href="/" className="flex items-center space-x-2">
@@ -51,18 +151,33 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <Link
-              href="/register"
-              className="bg-[#6ED0CE] text-[#2b3a4a] px-4 py-2 rounded-lg font-medium hover:bg-[#4DB1B1] transition-colors"
-            >
-              Get Bidder Number
-            </Link>
-            <Link
-              href="/login"
-              className="hover:text-[#6ED0CE] transition-colors"
-            >
-              Login
-            </Link>
+
+            {hydrated && (auth.isLoggedIn ? (
+              <>
+                <Link
+                  href={auth.accountHref}
+                  className="bg-[#6ED0CE] text-[#2b3a4a] px-4 py-2 rounded-lg font-medium hover:bg-[#4DB1B1] transition-colors"
+                >
+                  Your Account
+                </Link>
+                
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/register"
+                  className="bg-[#6ED0CE] text-[#2b3a4a] px-4 py-2 rounded-lg font-medium hover:bg-[#4DB1B1] transition-colors"
+                >
+                  Get Bidder Number
+                </Link>
+                <Link
+                  href="/login"
+                  className="hover:text-[#6ED0CE] transition-colors"
+                >
+                  Login
+                </Link>
+              </>
+            ))}
           </div>
 
           {/* Mobile Menu Button */}
@@ -90,20 +205,36 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/register"
-            className="block py-2 border-b border-gray-700 bg-[#6ED0CE] text-[#2b3a4a] rounded-lg text-center font-medium hover:bg-[#4DB1B1] transition-colors"
-            onClick={() => setIsOpen(false)}
-          >
-            Get Bidder Number
-          </Link>
-          <Link
-            href="/login"
-            className="block py-2 hover:text-[#6ED0CE] transition-colors"
-            onClick={() => setIsOpen(false)}
-          >
-            Login
-          </Link>
+
+          {hydrated && (auth.isLoggedIn ? (
+            <>
+              <Link
+                href={auth.accountHref}
+                className="block py-2 border-b border-gray-700 bg-[#6ED0CE] text-[#2b3a4a] rounded-lg text-center font-medium hover:bg-[#4DB1B1] transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                Your Account
+              </Link>
+              
+            </>
+          ) : (
+            <>
+              <Link
+                href="/register"
+                className="block py-2 border-b border-gray-700 bg-[#6ED0CE] text-[#2b3a4a] rounded-lg text-center font-medium hover:bg-[#4DB1B1] transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                Get Bidder Number
+              </Link>
+              <Link
+                href="/login"
+                className="block py-2 hover:text-[#6ED0CE] transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                Login
+              </Link>
+            </>
+          ))}
         </div>
       )}
     </nav>
