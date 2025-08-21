@@ -10,19 +10,27 @@ export default function LotDetailsPage() {
   const [lotData, setLotData] = useState(null);
   const [timeLeft, setTimeLeft] = useState("");
   const [bidAmount, setBidAmount] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  // Example lots array (same as sale-ring page)
-  const lots = [
-    { id: 1, title: "Lot 1 – Premium Angus Bull", bid: 2500, status: "Live", img: "/images/lot1.jpg", description: "A top-quality Angus bull with excellent genetics, ideal for breeding programs. Vaccinated and vet-checked.", reservePrice: 2000, seller: "John Doe Ranch", sellerPhone: "+1 555-123-4567", sellerEmail: "seller@example.com", video: "/videos/lots/lot1.mp4", endTime: new Date().getTime() + 2 * 60 * 60 * 1000 },
-    { id: 2, title: "Lot 2 – Champion Heifer", bid: 1800, status: "Live", img: "/images/lot2.jpg", description: "Champion heifer with excellent lineage.", reservePrice: 1500, seller: "Green Pastures", sellerPhone: "+1 555-987-6543", sellerEmail: "heifer@example.com", video: "/videos/lots/lot2.mp4", endTime: new Date().getTime() + 3 * 60 * 60 * 1000 },
-    { id: 3, title: "Lot 3 – Registered Hereford Bull", bid: 3000, status: "Live", img: "/images/lot3.jpg", description: "Registered Hereford bull for high-quality breeding.", reservePrice: 2500, seller: "Red Valley Ranch", sellerPhone: "+1 555-246-8100", sellerEmail: "hereford@example.com", video: "/videos/lots/lot3.mp4", endTime: new Date().getTime() + 4 * 60 * 60 * 1000 },
-    { id: 4, title: "Lot 4 – Purebred Charolais", bid: 2200, status: "Live", img: "/images/lot4.jpg", description: "Purebred Charolais for premium meat and breeding.", reservePrice: 2000, seller: "White Hills Farm", sellerPhone: "+1 555-369-1212", sellerEmail: "charolais@example.com", video: "/videos/lots/lot4.mp4", endTime: new Date().getTime() + 5 * 60 * 60 * 1000 },
-  ];
-
-  // Find the lot matching the slug ID
+  // Fetch lot data from API
   useEffect(() => {
-    const lot = lots.find((l) => l.id === parseInt(lotId));
-    setLotData(lot || null);
+    const fetchLot = async () => {
+      try {
+        const res = await fetch("/api/auctions");
+        const data = await res.json();
+        if (data.success) {
+          const lot = data.auctions.find(
+            (auction) => auction._id === lotId && auction.status === "published"
+          );
+          setLotData(lot || null);
+        }
+      } catch (error) {
+        console.error("Error fetching lot:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLot();
   }, [lotId]);
 
   // Countdown Timer
@@ -30,7 +38,7 @@ export default function LotDetailsPage() {
     if (!lotData) return;
     const timer = setInterval(() => {
       const now = new Date().getTime();
-      const distance = lotData.endTime - now;
+      const distance = new Date(lotData.endDate).getTime() - now;
 
       if (distance <= 0) {
         setTimeLeft("Auction Ended");
@@ -49,17 +57,25 @@ export default function LotDetailsPage() {
   const placeBid = () => {
     if (!lotData) return;
     const bidValue = parseFloat(bidAmount);
-    if (!bidValue || bidValue <= lotData.bid) {
+    if (!bidValue || bidValue <= lotData.startingBid) {
       alert("Your bid must be higher than the current bid.");
       return;
     }
     alert(`Bid of $${bidValue} placed successfully!`);
   };
 
-  if (!lotData) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-500">
         Loading...
+      </div>
+    );
+  }
+
+  if (!lotData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        Lot not found or not published.
       </div>
     );
   }
@@ -81,27 +97,28 @@ export default function LotDetailsPage() {
         {/* Left: Image + Video */}
         <div>
           <div className="relative">
-            <Image
-              src={lotData.img}
-              alt={lotData.title}
-              width={800}
-              height={500}
-              className="rounded-xl shadow-lg w-full object-cover"
-            />
+            {lotData.flyer && (
+              <Image
+                src={lotData.flyer}
+                alt={lotData.title}
+                width={800}
+                height={500}
+                className="rounded-xl shadow-lg w-full object-cover"
+              />
+            )}
+            {lotData.video && (
+              <video
+                controls
+                className="mt-6 w-full rounded-xl shadow-lg border border-gray-200"
+              >
+                <source src={lotData.video} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            )}
             <span className="absolute top-4 left-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold shadow">
               {lotData.status || "Live Auction"}
             </span>
           </div>
-
-          {lotData.video && (
-            <video
-              controls
-              className="mt-6 w-full rounded-xl shadow-lg border border-gray-200"
-            >
-              <source src={lotData.video} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-          )}
         </div>
 
         {/* Right: Details */}
@@ -112,7 +129,7 @@ export default function LotDetailsPage() {
           {/* Auction Info */}
           <div className="mt-6 bg-[#f8fdfd] border border-[#e0f2f2] rounded-xl p-5 shadow-sm">
             <p className="text-xl font-semibold text-gray-800">
-              Current Bid: <span className="text-[#335566]">${lotData.bid}</span>
+              Current Bid: <span className="text-[#335566]">${lotData.startingBid}</span>
             </p>
             <p className="text-sm text-gray-500 mt-1">
               Reserve Price: ${lotData.reservePrice}
@@ -143,13 +160,7 @@ export default function LotDetailsPage() {
             </button>
           </div>
 
-          {/* Seller Info */}
-          <div className="mt-8 bg-[#f3f8f8] p-5 rounded-xl border border-[#e0f2f2] shadow-sm">
-            <h3 className="text-lg font-bold text-[#335566]">Seller Information</h3>
-            <p className="mt-1 text-black">{lotData.seller}</p>
-            <p className="mt-1 text-black">📞 {lotData.sellerPhone}</p>
-            <p className="mt-1 text-black">✉️ {lotData.sellerEmail}</p>
-          </div>
+         
         </div>
       </div>
     </div>

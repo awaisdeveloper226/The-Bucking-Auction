@@ -10,11 +10,13 @@ import { Menu, X } from "lucide-react";
 const TOKEN_KEY = "token";
 const USER_ID_KEY = "userId";
 
-
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
-  const [auth, setAuth] = useState({ isLoggedIn: false, accountHref: "/account" });
+  const [auth, setAuth] = useState({
+    isLoggedIn: false,
+    accountHref: "/account",
+  });
   const pathname = usePathname();
   const bcRef = useRef(null);
 
@@ -22,10 +24,9 @@ export default function Navbar() {
     try {
       const token = localStorage.getItem(TOKEN_KEY);
       const userId = localStorage.getItem(USER_ID_KEY);
-      
 
       const isLoggedIn = !!(token || userId);
-      const accountHref = userId  ? `/dashboard/${userId}` : "/account";
+      const accountHref = userId ? `/dashboard/${userId}` : "/account";
 
       setAuth({ isLoggedIn, accountHref });
     } catch {
@@ -69,8 +70,12 @@ export default function Navbar() {
       localStorage.setItem = (key, value) => {
         const res = _setItem(key, value);
         if ([TOKEN_KEY, USER_ID_KEY].includes(key)) {
-          try { window.dispatchEvent(new Event("authChange")); } catch {}
-          try { bcRef.current?.postMessage({ type: "changed" }); } catch {}
+          try {
+            window.dispatchEvent(new Event("authChange"));
+          } catch {}
+          try {
+            bcRef.current?.postMessage({ type: "changed" });
+          } catch {}
         }
         return res;
       };
@@ -78,8 +83,12 @@ export default function Navbar() {
       localStorage.removeItem = (key) => {
         const res = _removeItem(key);
         if ([TOKEN_KEY, USER_ID_KEY].includes(key)) {
-          try { window.dispatchEvent(new Event("authChange")); } catch {}
-          try { bcRef.current?.postMessage({ type: "changed" }); } catch {}
+          try {
+            window.dispatchEvent(new Event("authChange"));
+          } catch {}
+          try {
+            bcRef.current?.postMessage({ type: "changed" });
+          } catch {}
         }
         return res;
       };
@@ -90,7 +99,9 @@ export default function Navbar() {
       window.removeEventListener("authChange", onAuthChange);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onFocus);
-      try { bcRef.current?.close(); } catch {}
+      try {
+        bcRef.current?.close();
+      } catch {}
     };
   }, []);
 
@@ -104,7 +115,7 @@ export default function Navbar() {
     try {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_ID_KEY);
-      
+
       // Patched localStorage will auto-fire updates
     } catch {}
     setIsOpen(false);
@@ -122,121 +133,121 @@ export default function Navbar() {
 
   return (
     <nav className="bg-[#2b3a4a] text-white shadow-lg sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo + Name */}
-          <div className="flex items-center space-x-3">
-            <Link href="/" className="flex items-center space-x-2">
-              <Image
-                src="/images/favicon.png"
-                alt="The Bucking Auction"
-                width={45}
-                height={45}
-                className="rounded-full"
-              />
-              <span className="font-bold text-xl tracking-wide hover:text-[#6ED0CE] transition-colors">
-                The Bucking Auction
-              </span>
-            </Link>
-          </div>
-
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-6">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="hover:text-[#6ED0CE] transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-
-            {hydrated && (auth.isLoggedIn ? (
-              <>
-                <Link
-                  href={auth.accountHref}
-                  className="bg-[#6ED0CE] text-[#2b3a4a] px-4 py-2 rounded-lg font-medium hover:bg-[#4DB1B1] transition-colors"
-                >
-                  Your Account
-                </Link>
-                
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/register"
-                  className="bg-[#6ED0CE] text-[#2b3a4a] px-4 py-2 rounded-lg font-medium hover:bg-[#4DB1B1] transition-colors"
-                >
-                  Get Bidder Number
-                </Link>
-                <Link
-                  href="/login"
-                  className="hover:text-[#6ED0CE] transition-colors"
-                >
-                  Login
-                </Link>
-              </>
-            ))}
-          </div>
-
-          {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="focus:outline-none"
-            >
-              {isOpen ? <X size={28} /> : <Menu size={28} />}
-            </button>
-          </div>
-        </div>
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="flex justify-between items-center h-16">
+      {/* Logo + Name */}
+      <div className="flex items-center space-x-3">
+        <Link href="/" className="flex items-center space-x-2">
+          <Image
+            src="/images/favicon.png"
+            alt="The Bucking Auction"
+            width={45}
+            height={45}
+            className="rounded-full"
+          />
+          <span className="font-bold text-xl tracking-wide hover:text-[#6ED0CE] transition-colors">
+            The Bucking Auction
+          </span>
+        </Link>
       </div>
 
-      {/* Mobile Dropdown */}
-      {isOpen && (
-        <div className="md:hidden bg-[#2b3a4a] px-4 pb-4 space-y-2 animate-fadeIn">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="block py-2 border-b border-gray-700 hover:text-[#6ED0CE] transition-colors"
-              onClick={() => setIsOpen(false)}
-            >
-              {link.label}
-            </Link>
-          ))}
+      {/* Desktop Menu (lg only) */}
+      <div className="hidden lg:flex items-center space-x-6">
+        {navLinks.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="hover:text-[#6ED0CE] transition-colors"
+          >
+            {link.label}
+          </Link>
+        ))}
 
-          {hydrated && (auth.isLoggedIn ? (
-            <>
-              <Link
-                href={auth.accountHref}
-                className="block py-2 border-b border-gray-700 bg-[#6ED0CE] text-[#2b3a4a] rounded-lg text-center font-medium hover:bg-[#4DB1B1] transition-colors"
-                onClick={() => setIsOpen(false)}
-              >
-                Your Account
-              </Link>
-              
-            </>
+        {hydrated &&
+          (auth.isLoggedIn ? (
+            <Link href={auth.accountHref} className="block py-2" onClick={() => setIsOpen(false)}>
+              <div className="flex justify-center">
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#6ED0CE]">
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/512/847/847969.png"
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            </Link>
           ) : (
             <>
               <Link
                 href="/register"
-                className="block py-2 border-b border-gray-700 bg-[#6ED0CE] text-[#2b3a4a] rounded-lg text-center font-medium hover:bg-[#4DB1B1] transition-colors"
-                onClick={() => setIsOpen(false)}
+                className="bg-[#6ED0CE] text-[#2b3a4a] px-4 py-2 rounded-lg font-medium hover:bg-[#4DB1B1] transition-colors"
               >
                 Get Bidder Number
               </Link>
-              <Link
-                href="/login"
-                className="block py-2 hover:text-[#6ED0CE] transition-colors"
-                onClick={() => setIsOpen(false)}
-              >
+              <Link href="/login" className="hover:text-[#6ED0CE] transition-colors">
                 Login
               </Link>
             </>
           ))}
-        </div>
-      )}
-    </nav>
+      </div>
+
+      {/* Mobile & Tablet Menu Button */}
+      <div className="lg:hidden flex items-center">
+        <button onClick={() => setIsOpen(!isOpen)} className="focus:outline-none">
+          {isOpen ? <X size={28} /> : <Menu size={28} />}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {/* Mobile & Tablet Dropdown */}
+  {isOpen && (
+    <div className="lg:hidden bg-[#2b3a4a] px-4 pb-4 space-y-2 animate-fadeIn">
+      {navLinks.map((link) => (
+        <Link
+          key={link.href}
+          href={link.href}
+          className="block py-2 border-b border-gray-700 hover:text-[#6ED0CE] transition-colors"
+          onClick={() => setIsOpen(false)}
+        >
+          {link.label}
+        </Link>
+      ))}
+
+      {hydrated &&
+        (auth.isLoggedIn ? (
+          <Link href={auth.accountHref} className="block py-2" onClick={() => setIsOpen(false)}>
+            <div className="flex">
+              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#6ED0CE]">
+                <img
+                  src="https://cdn-icons-png.flaticon.com/512/847/847969.png"
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          </Link>
+        ) : (
+          <>
+            <Link
+              href="/register"
+              className="block py-2 border-b border-gray-700 bg-[#6ED0CE] text-[#2b3a4a] rounded-lg text-center font-medium hover:bg-[#4DB1B1] transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              Get Bidder Number
+            </Link>
+            <Link
+              href="/login"
+              className="block py-2 hover:text-[#6ED0CE] transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              Login
+            </Link>
+          </>
+        ))}
+    </div>
+  )}
+</nav>
+
   );
 }
