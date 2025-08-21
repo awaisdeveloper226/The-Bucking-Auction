@@ -103,7 +103,7 @@ export default function LotDetailsPage() {
                 alt={lotData.title}
                 width={800}
                 height={500}
-                className="rounded-xl shadow-lg w-full object-cover"
+                className="rounded-xl shadow-lg w-full object-contain"
               />
             )}
             {lotData.video && (
