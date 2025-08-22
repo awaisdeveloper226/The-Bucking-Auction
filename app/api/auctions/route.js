@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDB } from "@/lib/mongodb";
-import Auction from "@/models/Auction";
+import {Auction} from "@/models/Auction";
 
 // POST → Create auction
 export async function POST(req) {

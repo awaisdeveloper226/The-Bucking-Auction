@@ -22,5 +22,5 @@ const AuctionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.Auction ||
-  mongoose.model("Auction", AuctionSchema);
+export const Auction = mongoose.models.Auction || mongoose.model("Auction", AuctionSchema);
+

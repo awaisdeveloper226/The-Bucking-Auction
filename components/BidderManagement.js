@@ -1,30 +1,27 @@
 "use client";
-import { useState } from "react";
-import { Ban, CheckCircle, UserPlus, Trash2, Edit2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Ban, CheckCircle, Trash2, Edit2 } from "lucide-react";
 
 export default function BidderManagement() {
-  const [bidders, setBidders] = useState([
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john@example.com",
-      bidderNumber: 101,
-      status: "Active",
-      ip: "192.168.1.12",
-      lastActivity: "Placed bid on Lot #3",
-    },
-    {
-      id: 2,
-      name: "Emily Smith",
-      email: "emily@example.com",
-      bidderNumber: 102,
-      status: "Suspended",
-      ip: "192.168.1.15",
-      lastActivity: "Attempted login",
-    },
-  ]);
-
+  const [bidders, setBidders] = useState([]);
   const [assignForm, setAssignForm] = useState({ id: "", number: "" });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchBidders();
+  }, []);
+
+  const fetchBidders = async () => {
+    try {
+      const res = await fetch("/api/bidders");
+      const data = await res.json();
+      setBidders(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleStatus = (id) => {
     setBidders(
@@ -40,7 +37,7 @@ export default function BidderManagement() {
     if (!assignForm.id || !assignForm.number) return;
     setBidders(
       bidders.map((b) =>
-        b.id === parseInt(assignForm.id)
+        b.id === assignForm.id
           ? { ...b, bidderNumber: assignForm.number }
           : b
       )
@@ -48,13 +45,11 @@ export default function BidderManagement() {
     setAssignForm({ id: "", number: "" });
   };
 
-  const overrideBid = (id) => {
-    alert(`Bid overridden for bidder #${id}`);
-  };
+  const overrideBid = (id) => alert(`Bid overridden for bidder #${id}`);
+  const proxyBid = (id) => alert(`Proxy bid placed for bidder #${id}`);
+  const deleteBidder = (id) => setBidders(bidders.filter((b) => b.id !== id));
 
-  const proxyBid = (id) => {
-    alert(`Proxy bid placed for bidder #${id}`);
-  };
+  if (loading) return <p className="p-6">Loading bidders...</p>;
 
   return (
     <div className="p-6 bg-white rounded-2xl shadow-md">
@@ -65,7 +60,7 @@ export default function BidderManagement() {
         <h3 className="font-semibold mb-3">Assign Bidder Number</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <input
-            type="number"
+            type="text"
             placeholder="Bidder ID"
             value={assignForm.id}
             onChange={(e) =>
@@ -168,9 +163,4 @@ export default function BidderManagement() {
       </div>
     </div>
   );
-
-  // helper fn
-  function deleteBidder(id) {
-    setBidders(bidders.filter((b) => b.id !== id));
-  }
 }
