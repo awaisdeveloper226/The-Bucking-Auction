@@ -238,12 +238,12 @@ export default function PaymentsReporting() {
             <div className="flex justify-between items-center border-b pb-4 mb-6">
               <div>
                 <h2 className="text-3xl font-bold text-gray-900">
-                  CoreTech Solutions
+                  The Bucking Auction
                 </h2>
                 <p className="text-gray-500 text-sm">
-                  123 Business Street, Karachi
+                  Dummy Address for now
                 </p>
-                <p className="text-gray-500 text-sm">support@coretech.com</p>
+                <p className="text-gray-500 text-sm">support@thebuckingauction.com</p>
               </div>
               <div className="text-right">
                 <h3 className="text-xl font-semibold">INVOICE</h3>
@@ -325,7 +325,7 @@ export default function PaymentsReporting() {
             {/* Footer */}
             <div className="text-center text-gray-500 text-sm border-t pt-3">
               Thank you for your business! Please contact{" "}
-              <span className="font-medium">support@coretech.com</span> for
+              <span className="font-medium">support@thebuckingauction.com</span> for
               queries.
             </div>
           </div>
