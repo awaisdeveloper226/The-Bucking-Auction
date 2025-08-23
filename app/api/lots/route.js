@@ -2,33 +2,29 @@
 
 import { connectToDB } from "@/lib/mongodb"; // Adjust path as needed
 import { Lot } from "@/models/Lot"; // Adjust path as needed
+import mongoose from "mongoose";
 
 // For App Router (Next.js 13+)
 export async function GET(request) {
   try {
     await connectToDB();
-    
+
     const { searchParams } = new URL(request.url);
-    const auctionId = searchParams.get('auctionId');
-    
+    const auctionId = searchParams.get("auctionId");
+
     let query = {};
     if (auctionId) {
-      query.auctionId = auctionId;
+      query.auctionId = new mongoose.Types.ObjectId(auctionId); // ✅ Fix
     }
-    
-   const lots = await Lot.find(query)
-  .populate({ path: 'auctionId', select: 'title' }) // make sure path is 'auctionId'
-  .sort({ order: 1, createdAt: 1 });
 
+    const lots = await Lot.find(query)
+      .populate({ path: "auctionId", select: "title" })
+      .sort({ order: 1, createdAt: 1 });
 
-    
     return Response.json(lots);
   } catch (error) {
-    console.error('GET /api/lots error:', error);
-    return Response.json(
-      { error: 'Failed to fetch lots' },
-      { status: 500 }
-    );
+    console.error("GET /api/lots error:", error);
+    return Response.json({ error: "Failed to fetch lots" }, { status: 500 });
   }
 }
 
