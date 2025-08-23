@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { connectToDB } from "@/lib/mongodb";
-import Auction from "@/models/Auction";
+import {Auction} from "@/models/Auction";
 
 export const dynamic = "force-dynamic"; // ensures fresh data each time
 
