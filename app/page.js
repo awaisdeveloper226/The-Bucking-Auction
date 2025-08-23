@@ -1,9 +1,88 @@
 // app/home/page.jsx
 "use client";
 import Image from "next/image";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function HomePage() {
+  const [auction, setAuction] = useState(null);
+  const [lots, setLots] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState(null);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("userId");
+    if (storedUserId) {
+      setUserId(storedUserId);
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchAuctionAndLots = async () => {
+      try {
+        // 1. Get published auction
+        const auctionRes = await fetch("/api/auctions");
+        const auctionData = await auctionRes.json();
+
+        // Handle different response structures
+        let auctions = [];
+        if (auctionData.success && auctionData.auctions) {
+          auctions = auctionData.auctions;
+        } else if (Array.isArray(auctionData)) {
+          auctions = auctionData;
+        } else if (
+          auctionData.auctions &&
+          Array.isArray(auctionData.auctions)
+        ) {
+          auctions = auctionData.auctions;
+        }
+
+        const activeAuction = auctions.find((a) => a.status === "published");
+
+        if (activeAuction) {
+          setAuction(activeAuction);
+
+          // 2. Get lots for this specific auction using auctionId query parameter
+          const lotRes = await fetch(
+            `/api/lots?auctionId=${activeAuction._id}`
+          );
+          const lotData = await lotRes.json();
+
+          // Handle the response structure from your API
+          let fetchedLots = [];
+          if (Array.isArray(lotData)) {
+            fetchedLots = lotData;
+          } else if (lotData.lots && Array.isArray(lotData.lots)) {
+            fetchedLots = lotData.lots;
+          }
+
+          // The API should already filter by auctionId, but let's ensure we only get lots for this auction
+          const auctionLots = fetchedLots.filter(
+            (lot) =>
+              lot.auctionId === activeAuction._id ||
+              lot.auctionId?._id === activeAuction._id
+          );
+
+          setLots(auctionLots);
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAuctionAndLots();
+  }, []);
+
+  const filteredLots = lots.filter((lot) =>
+    lot.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="bg-white">
       {/* Hero Section */}
@@ -36,60 +115,113 @@ export default function HomePage() {
               View Live Auctions
             </Link>
             <Link
-              href="/register"
+              href={userId ? `/dashboard/${userId}` : "/register"}
               className="border border-white px-10 py-4 rounded-xl font-semibold hover:bg-white hover:text-[#335566] hover:scale-105 transition transform text-lg"
             >
-              Get Bidder Number
+              {userId ? "My Dashboard" : "Get Bidder Number"}
             </Link>
           </div>
         </div>
-
-       
       </section>
 
-      {/* Featured Auctions */}
-      <section className="max-w-7xl mx-auto px-6 py-20">
-        <h2 className="text-3xl font-bold text-[#335566] mb-12 text-center">
-          Featured Lots
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-          {[1, 2, 3].map((lot) => (
-            <div
-              key={lot}
-              className="border rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition transform hover:-translate-y-1 bg-white group"
-            >
-              <div className="relative w-full h-56 overflow-hidden">
-                <Image
-                  src={`/images/lot${lot}.jpg`}
-                  alt={`Lot ${lot}`}
-                  fill
-                  className="object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute top-3 left-3 bg-[#6ED0CE] text-white px-3 py-1 text-sm font-semibold rounded-full shadow">
-                  Lot #{lot}
+      {/* Search */}
+      {auction && (
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <h2 className="text-3xl font-bold text-[#335566] text-center mb-7 mt-7">
+            Live Lots – Bid in Real Time
+          </h2>
+
+          <div className="flex justify-center">
+            <input
+              type="text"
+              placeholder="Search lots..."
+              className="w-full max-w-lg border border-gray-300 rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#6ED0CE] text-black"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <button className="bg-[#6ED0CE] hover:bg-[#4DB1B1] text-[#335566] px-4 py-2 rounded-r-lg font-semibold">
+              Search
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Lots */}
+      <div className="max-w-6xl mx-auto px-4 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {loading ? (
+          <p className="text-gray-500 col-span-full text-center">
+            Loading lots...
+          </p>
+        ) : !auction ? (
+          <p className="text-center text-gray-500 col-span-full mt-12">
+            No active auction is live.
+          </p>
+        ) : filteredLots.length === 0 ? (
+          <p className="text-center text-gray-500 col-span-full mt-12">
+            No matching lots found.
+          </p>
+        ) : (
+          filteredLots.map((lot) => {
+            const handleCardClick = () => {
+              const storedUserId = localStorage.getItem("userId");
+              if (!storedUserId) {
+                router.push("/register");
+              } else {
+                router.push(`/sale-ring/${lot._id}`);
+              }
+            };
+
+            return (
+              <div
+                key={lot._id}
+                onClick={handleCardClick}
+                className="group block bg-white border rounded-lg overflow-hidden shadow hover:shadow-lg transition cursor-pointer"
+              >
+                <div className="relative">
+                  {lot.photos?.[0] && (
+                    <Image
+                      src={lot.photos[0]}
+                      alt={lot.title}
+                      width={400}
+                      height={280}
+                      className="w-full h-48 object-contain group-hover:scale-105 transition-transform"
+                    />
+                  )}
+                  <span
+                    className={`absolute top-2 left-2 px-2 py-1 text-xs font-semibold rounded ${
+                      lot.status === "active"
+                        ? "bg-green-500 text-white"
+                        : "bg-gray-500 text-white"
+                    }`}
+                  >
+                    {lot.status}
+                  </span>
+                </div>
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold text-[#335566] group-hover:text-[#4DB1B1] transition-colors">
+                    {lot.title}
+                  </h3>
+                  <p className="text-gray-700 mt-2">
+                    Current Bid:{" "}
+                    <span className="font-bold">
+                      ${lot.currentBid || lot.startingBid}
+                    </span>
+                  </p>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // prevent bubbling to card
+                      handleCardClick();
+                    }}
+                    className="mt-4 w-full bg-[#335566] hover:bg-[#4a6f7d] text-white py-2 rounded font-medium transition"
+                  >
+                    Bid Now!
+                  </button>
                 </div>
               </div>
-              <div className="p-5">
-                <h3 className="text-xl font-semibold text-[#335566] group-hover:text-[#4DB1B1] transition">
-                  Premium Angus Bull
-                </h3>
-                <p className="text-gray-700 mt-3 font-medium">
-                  Current Bid: $2,500
-                </p>
-                <p className="text-sm text-gray-500">Ends in: 02:15:45</p>
-                <Link
-                  href={`/sale-ring/${lot}`}
-                  className="block mt-5 bg-[#335566] text-white py-2 rounded-lg hover:bg-[#4a6f7d] hover:scale-105 transition text-center font-medium"
-                >
-                  Bid Now
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-   
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }

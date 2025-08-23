@@ -1,45 +1,64 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Ban, CheckCircle, Trash2, Edit2 } from "lucide-react";
+import { Ban, CheckCircle, Trash2, Edit2, X } from "lucide-react";
 
 export default function BidderManagement() {
   const [bidders, setBidders] = useState([]);
   const [assignForm, setAssignForm] = useState({ id: "", number: "" });
   const [loading, setLoading] = useState(true);
 
+  const [deleteBidderId, setDeleteBidderId] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const [confirmSuspend, setConfirmSuspend] = useState(null);
+  const [suspending, setSuspending] = useState(false);
+
   useEffect(() => {
     fetchBidders();
   }, []);
 
+  // Fetch bidders from API and normalize status
   const fetchBidders = async () => {
     try {
       const res = await fetch("/api/bidders");
       const data = await res.json();
       setBidders(data);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching bidders:", err);
     } finally {
       setLoading(false);
     }
   };
+  const handleSuspend = async () => {
+    if (!confirmSuspend) return;
+    try {
+      setSuspending(true);
 
-  const toggleStatus = (id) => {
-    setBidders(
-      bidders.map((b) =>
-        b.id === id
-          ? { ...b, status: b.status === "Active" ? "Suspended" : "Active" }
-          : b
-      )
-    );
+      const res = await fetch(`/api/bidders/${confirmSuspend.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ suspend: confirmSuspend.status === "Active" }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        await fetchBidders(); // Refresh UI
+        setConfirmSuspend(null);
+      } else {
+        alert(data.message || "Failed to update status");
+      }
+    } catch (err) {
+      console.error("Error suspending bidder:", err);
+    } finally {
+      setSuspending(false);
+    }
   };
 
   const assignBidderNumber = () => {
     if (!assignForm.id || !assignForm.number) return;
     setBidders(
       bidders.map((b) =>
-        b.id === assignForm.id
-          ? { ...b, bidderNumber: assignForm.number }
-          : b
+        b.id === assignForm.id ? { ...b, bidderNumber: assignForm.number } : b
       )
     );
     setAssignForm({ id: "", number: "" });
@@ -47,7 +66,28 @@ export default function BidderManagement() {
 
   const overrideBid = (id) => alert(`Bid overridden for bidder #${id}`);
   const proxyBid = (id) => alert(`Proxy bid placed for bidder #${id}`);
-  const deleteBidder = (id) => setBidders(bidders.filter((b) => b.id !== id));
+
+  const handleDelete = async () => {
+    if (!deleteBidderId) return;
+    try {
+      setDeleting(true);
+      const res = await fetch(`/api/bidders/${deleteBidderId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        await fetchBidders();
+        setDeleteBidderId(null);
+      } else {
+        alert(data.message || "Failed to delete bidder");
+      }
+    } catch (err) {
+      console.error("Error deleting bidder:", err);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loading) return <p className="p-6">Loading bidders...</p>;
 
@@ -114,22 +154,24 @@ export default function BidderManagement() {
                 <td className="p-3">
                   <span
                     className={`px-3 py-1 rounded-full text-sm ${
-                      b.status === "Active"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
+                      b.isSuspended
+                        ? "bg-red-100 text-red-800"
+                        : "bg-green-100 text-green-800"
                     }`}
                   >
-                    {b.status}
+                    {b.isSuspended ? "Suspended" : "Active"}
                   </span>
                 </td>
                 <td className="p-3">{b.ip}</td>
                 <td className="p-3">{b.lastActivity}</td>
                 <td className="p-3 flex space-x-3">
                   <button
-                    onClick={() => toggleStatus(b.id)}
+                    onClick={() =>
+                      setConfirmSuspend({ id: b.id, status: b.status })
+                    }
                     className="text-red-500 hover:text-red-700"
                     title={
-                      b.status === "Active" ? "Suspend Bidder" : "Activate Bidder"
+                      b.isSuspended ? "Unsuspend Bidder" : "Suspend Bidder"
                     }
                   >
                     <Ban size={18} />
@@ -149,7 +191,7 @@ export default function BidderManagement() {
                     <CheckCircle size={18} />
                   </button>
                   <button
-                    onClick={() => deleteBidder(b.id)}
+                    onClick={() => setDeleteBidderId(b.id)}
                     className="text-gray-500 hover:text-gray-700"
                     title="Remove Bidder"
                   >
@@ -161,6 +203,80 @@ export default function BidderManagement() {
           </tbody>
         </table>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteBidderId && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-lg w-full max-w-sm p-6 relative">
+            <button
+              onClick={() => setDeleteBidderId(null)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="text-lg font-semibold mb-4">Confirm Deletion</h3>
+            <p className="mb-6">Are you sure you want to delete this bidder?</p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteBidderId(null)}
+                className="px-4 py-2 rounded-lg border"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Suspend Confirmation Modal */}
+      {confirmSuspend && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-lg w-full max-w-sm p-6 relative">
+            <button
+              onClick={() => setConfirmSuspend(null)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="text-lg font-semibold mb-4">
+              {confirmSuspend.status === "Active"
+                ? "Suspend Bidder"
+                : "Activate Bidder"}
+            </h3>
+            <p className="mb-6">
+              Are you sure you want to{" "}
+              {confirmSuspend.status === "Active" ? "suspend" : "activate"} this
+              bidder?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setConfirmSuspend(null)}
+                className="px-4 py-2 rounded-lg border"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSuspend}
+                disabled={suspending}
+                className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
+              >
+                {suspending
+                  ? "Processing..."
+                  : confirmSuspend.status === "Active"
+                  ? "Suspend"
+                  : "Activate"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

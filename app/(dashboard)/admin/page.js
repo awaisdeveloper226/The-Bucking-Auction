@@ -7,6 +7,7 @@ import {
   DollarSign,
   BarChart,
   Bell,
+  Mail,
   MessageSquare,
   Menu,
   X,
@@ -17,6 +18,7 @@ import BidderManagement from "@/components/BidderManagement";
 import PaymentsReporting from "@/components/Payments";
 import NotificationsManagement from "@/components/Notifications";
 import BidderChatToggle from "@/components/BidderChat";
+import UserInquiries from "@/components/UserInquiries";
 
 export default function AdminPanel() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -63,6 +65,7 @@ export default function AdminPanel() {
     },
     { id: "notifications", label: "Notifications", icon: <Bell size={20} /> },
     { id: "chat", label: "Bidder Chat", icon: <MessageSquare size={20} /> },
+    { id: "inquiries", label: "User Inquiries", icon: <Mail size={20} /> },
   ];
 
   const handleTabClick = (tabId) => {
@@ -93,6 +96,8 @@ export default function AdminPanel() {
         return <NotificationsManagement />;
       case "chat":
         return <BidderChatToggle />;
+      case "inquiries": // ✅ Added
+        return <UserInquiries />;
       default:
         return null;
     }

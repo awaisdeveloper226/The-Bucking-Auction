@@ -317,6 +317,7 @@ export default function PaymentsReporting() {
                 size="sm"
                 variant="default"
                 onClick={() => handleDownloadPDF(selectedInvoice)}
+                className='bg-blue-300'
               >
                 Download PDF
               </Button>

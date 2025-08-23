@@ -1,22 +1,23 @@
-import { connectToDB } from "@/lib/mongodb"; // create this helper if you don't have it
+import { connectToDB } from "@/lib/mongodb";
 import User from "@/models/User";
 
+// GET /api/bidders
 export async function GET() {
   try {
     await connectToDB();
     const users = await User.find({})
-      .select("firstName lastName emailAddress biddingNumber isVerified createdAt updatedAt")
+      .select("firstName lastName emailAddress biddingNumber isVerified isSuspended createdAt updatedAt")
       .lean();
 
-    // Transform data to match previous component
-    const transformed = users.map((u, index) => ({
+    const transformed = users.map((u) => ({
       id: u._id.toString(),
       name: `${u.firstName} ${u.lastName}`,
       email: u.emailAddress,
       bidderNumber: u.biddingNumber || "",
-      status: u.isVerified ? "Active" : "Suspended",
-      ip: "-", // you don't have IP in schema
-      lastActivity: "-", // you don't have lastActivity in schema
+      status: u.isSuspended ? "Suspended" : "Active",
+      isSuspended: u.isSuspended || false, // ensure all have this field
+      ip: "-",
+      lastActivity: "-",
     }));
 
     return new Response(JSON.stringify(transformed), {
@@ -25,5 +26,25 @@ export async function GET() {
     });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  }
+}
+
+// PATCH /api/bidders/:id
+export async function PATCH(req, { params }) {
+  try {
+    await connectToDB();
+    const { id } = params;
+    const body = await req.json();
+    const { suspend } = body; // boolean: true = suspend, false = activate
+
+    const user = await User.findById(id);
+    if (!user) return new Response(JSON.stringify({ success: false, message: "User not found" }), { status: 404 });
+
+    user.isSuspended = suspend;
+    await user.save();
+
+    return new Response(JSON.stringify({ success: true, message: "Status updated" }), { status: 200 });
+  } catch (error) {
+    return new Response(JSON.stringify({ success: false, message: error.message }), { status: 500 });
   }
 }

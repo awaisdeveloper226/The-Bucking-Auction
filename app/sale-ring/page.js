@@ -3,13 +3,24 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import ChatBox from "@/components/ChatComponent";
+import { useRouter } from "next/navigation";
 
 export default function SaleRingPage() {
   const [auction, setAuction] = useState(null);
   const [lots, setLots] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+
+  const router = useRouter();
+
+  const handleCardClick = (lotId) => {
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      router.push("/register"); // redirect if not logged in
+    } else {
+      router.push(`/sale-ring/${lotId}`); // go to lot page if logged in
+    }
+  };
 
   useEffect(() => {
     const fetchAuctionAndLots = async () => {
@@ -101,6 +112,10 @@ export default function SaleRingPage() {
       {/* Search */}
       {auction && (
         <div className="max-w-6xl mx-auto px-4 py-6">
+          <h2 className="text-3xl font-bold text-[#335566] text-center mb-7 mt-7">
+            Live Auction Lots – Place Your Bids Now!
+          </h2>
+
           <div className="flex justify-center">
             <input
               type="text"
@@ -132,10 +147,10 @@ export default function SaleRingPage() {
           </p>
         ) : (
           filteredLots.map((lot) => (
-            <Link
+            <div
               key={lot._id}
-              href={`/sale-ring/${lot._id}`}
-              className="group block bg-white border rounded-lg overflow-hidden shadow hover:shadow-lg transition"
+              onClick={() => handleCardClick(lot._id)}
+              className="cursor-pointer group block bg-white border rounded-lg overflow-hidden shadow hover:shadow-lg transition"
             >
               <div className="relative">
                 {lot.photos?.[0] && (
@@ -171,7 +186,7 @@ export default function SaleRingPage() {
                   View Lot
                 </button>
               </div>
-            </Link>
+            </div>
           ))
         )}
       </div>
@@ -185,12 +200,6 @@ export default function SaleRingPage() {
           View Past Auctions
         </Link>
       </div>
-
-      {/* Chat Box */}
-      {auction && auction.status === "published" && (
-        <ChatBox auctionId={auction._id} chatEnabled={auction.chatEnabled} />
-      )}
-      
     </div>
   );
 }

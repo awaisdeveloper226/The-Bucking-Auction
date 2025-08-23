@@ -16,6 +16,10 @@ export async function POST(req) {
       return new Response(JSON.stringify({ success: false, message: "Please verify your email first." }), { status: 403 });
     }
 
+    if (user.isSuspended) {
+      return new Response(JSON.stringify({ success: false, message: "Your account has been suspended. Please contact support." }), { status: 403 });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return new Response(JSON.stringify({ success: false, message: "Invalid credentials" }), { status: 401 });
