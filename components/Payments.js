@@ -46,12 +46,12 @@ export default function PaymentsReporting() {
     // Company Header
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("CoreTech Solutions", 14, 20);
+    doc.text("The Bucking Auction", 14, 20);
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100);
-    doc.text("123 Business Street, Karachi", 14, 28);
-    doc.text("support@coretech.com", 14, 34);
+    doc.text("dummy address for now", 14, 28);
+    doc.text("support@cthebuckingauction.com", 14, 34);
 
     // Invoice Info
     doc.setFontSize(14);
