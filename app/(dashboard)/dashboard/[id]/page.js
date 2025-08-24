@@ -287,7 +287,7 @@ export default function BuyerDashboard({ params }) {
                   Quick Actions
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  <button className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition text-left">
+                  <button onClick={() =>  router.push("/sale-ring")} className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition text-left">
                     <Gavel className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0" />
                     <span className="font-medium text-blue-900 text-sm sm:text-base">
                       Browse Auctions

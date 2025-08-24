@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Ban, CheckCircle, Trash2, Edit2, X } from "lucide-react";
+import { Ban, CheckCircle, Trash2, Edit2, X, Unlock } from "lucide-react";
 
 export default function BidderManagement() {
   const [bidders, setBidders] = useState([]);
@@ -174,7 +174,11 @@ export default function BidderManagement() {
                       b.isSuspended ? "Unsuspend Bidder" : "Suspend Bidder"
                     }
                   >
-                    <Ban size={18} />
+                    {b.isSuspended ? (
+                      <Unlock color="green" size={18} />
+                    ) : (
+                      <Ban size={18} />
+                    )}
                   </button>
                   <button
                     onClick={() => overrideBid(b.id)}
@@ -245,16 +249,19 @@ export default function BidderManagement() {
             >
               <X size={20} />
             </button>
+
             <h3 className="text-lg font-semibold mb-4">
               {confirmSuspend.status === "Active"
                 ? "Suspend Bidder"
                 : "Activate Bidder"}
             </h3>
+
             <p className="mb-6">
               Are you sure you want to{" "}
               {confirmSuspend.status === "Active" ? "suspend" : "activate"} this
               bidder?
             </p>
+
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setConfirmSuspend(null)}
@@ -262,10 +269,15 @@ export default function BidderManagement() {
               >
                 Cancel
               </button>
+
               <button
                 onClick={handleSuspend}
                 disabled={suspending}
-                className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
+                className={`px-4 py-2 rounded-lg ${
+                  confirmSuspend.status === "Active"
+                    ? "bg-red-500 text-white hover:bg-red-600"
+                    : "bg-green-500 text-white hover:bg-green-600"
+                }`}
               >
                 {suspending
                   ? "Processing..."
