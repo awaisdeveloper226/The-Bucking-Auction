@@ -126,16 +126,11 @@ export default function BuyerDashboard({ params }) {
         return;
       }
 
-      try {
-        const res = await fetch(`/api/users/${userId}`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to fetch profile");
-        setProfile(data);
-      } catch (err) {
-        setError("⚠️ Could not load profile. Please re-login.");
-      } finally {
-        setLoading(false);
-      }
+      const res = await fetch(`/api/users/${userId}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to fetch profile");
+      setProfile(data);
+      setLoading(false);
     };
 
     fetchProfile();
@@ -376,7 +371,7 @@ export default function BuyerDashboard({ params }) {
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   <button
-                    onClick={() => router.push("/sale-ring")}
+                    onClick={() => setActiveMenu("Lots")}
                     className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition text-left"
                   >
                     <Gavel className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0" />
@@ -384,7 +379,10 @@ export default function BuyerDashboard({ params }) {
                       Browse Live Lots
                     </span>
                   </button>
-                  <button className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-green-50 hover:bg-green-100 rounded-lg transition text-left">
+                  <button
+                    onClick={() => setActiveMenu("Watchlist")}
+                    className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-green-50 hover:bg-green-100 rounded-lg transition text-left"
+                  >
                     <Star className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 flex-shrink-0" />
                     <span className="font-medium text-green-900 text-sm sm:text-base">
                       View Watchlist
