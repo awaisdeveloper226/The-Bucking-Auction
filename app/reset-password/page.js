@@ -1,22 +1,32 @@
 "use client";
-import { useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function ResetPasswordPage() {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const token = searchParams.get("token");
-
+  const [token, setToken] = useState(null);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // ✅ Get token safely on client side
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const t = searchParams.get("token");
+    setToken(t);
+  }, []);
 
   const handleReset = async (e) => {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
       setMessage("Passwords do not match");
+      return;
+    }
+
+    if (!token) {
+      setMessage("Invalid reset link");
       return;
     }
 
@@ -42,6 +52,14 @@ export default function ResetPasswordPage() {
       setLoading(false);
     }
   };
+
+  if (token === null) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-gray-600 font-medium">Loading reset link...</p>
+      </div>
+    );
+  }
 
   if (!token) {
     return (
