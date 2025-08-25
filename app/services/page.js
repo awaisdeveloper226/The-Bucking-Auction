@@ -1,7 +1,18 @@
 // app/services/page.tsx
+"use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function ServicesPage() {
+  const [hasUser, setHasUser] = useState(false);
+
+  useEffect(() => {
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      setHasUser(true);
+    }
+  }, []);
+
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -45,18 +56,20 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      {/* Call to Action */}
-      <section className="bg-[#6ED0CE] py-12 text-center">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">
-          Ready to Join the Auction?
-        </h2>
-        <Link
-          href="/register"
-          className="inline-block bg-[#335566] text-white px-6 py-3 rounded-lg hover:bg-[#223a48] transition"
-        >
-          Get Your Bidder Number
-        </Link>
-      </section>
+      {/* Call to Action (hidden if user logged in) */}
+      {!hasUser && (
+        <section className="bg-[#6ED0CE] py-12 text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            Ready to Join the Auction?
+          </h2>
+          <Link
+            href="/register"
+            className="inline-block bg-[#335566] text-white px-6 py-3 rounded-lg hover:bg-[#223a48] transition"
+          >
+            Get Your Bidder Number
+          </Link>
+        </section>
+      )}
     </main>
   );
 }

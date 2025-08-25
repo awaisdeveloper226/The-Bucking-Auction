@@ -53,15 +53,18 @@ const UserSchema = new Schema(
       default: false,
     },
 
-    isSuspended: { 
-      type: Boolean, 
-      default: false, 
+    isSuspended: {
+      type: Boolean,
+      default: false,
     },
 
     verificationToken: {
       type: String,
       index: true,
     },
+
+    resetToken: { type: String},
+    resetTokenExpiry: { type: Date},
   },
   { timestamps: true }
 );
