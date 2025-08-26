@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-// import { socket } from "@/lib/socketClient"; // when you set up socket
+import { io } from "socket.io-client";
 
 export default function LotDetailsPage() {
   const { lotId } = useParams();
@@ -14,6 +14,32 @@ export default function LotDetailsPage() {
   const [bidAmount, setBidAmount] = useState("");
   const [loading, setLoading] = useState(true);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [bidError, setBidError] = useState("");
+  const [bids, setBids] = useState([]);
+  const [currentBid, setCurrentBid] = useState(0);
+  const [totalBids, setTotalBids] = useState(0);
+  const [isPlacingBid, setIsPlacingBid] = useState(false);
+
+  const socketRef = useRef(null);
+  const bidsContainerRef = useRef(null);
+
+  // Generate user info
+  const getUserInfo = useCallback(() => {
+    let userId = localStorage.getItem("userId");
+    if (!userId) {
+      userId = Math.random().toString(36).substr(2, 9);
+      localStorage.setItem("userId", userId);
+    }
+
+    let userName = localStorage.getItem("userName");
+    if (!userName) {
+      userName = `Bidder-${userId.slice(-4)}`;
+      localStorage.setItem("userName", userName);
+    }
+
+    return { userId, userName };
+  }, []);
 
   // ----- helpers -----
   const normalizeLot = (raw) => raw?.lot ?? raw?.data ?? raw;
@@ -36,7 +62,95 @@ export default function LotDetailsPage() {
   const toIdString = (val) =>
     typeof val === "string" ? val : (val?._id ?? val)?.toString?.() ?? "";
 
-  // Fetch lot + auction data
+  // Initialize socket connection
+  useEffect(() => {
+    if (!lotId) return;
+
+    // Initialize socket server
+    fetch("/api/socketio").catch(console.error);
+
+    // Create socket connection
+    socketRef.current = io(
+      process.env.NODE_ENV === "production"
+        ? undefined
+        : "http://localhost:3000",
+      {
+        transports: ["websocket", "polling"],
+      }
+    );
+
+    const socket = socketRef.current;
+
+    socket.on("connect", () => {
+      console.log("Socket connected:", socket.id);
+      setSocketConnected(true);
+      socket.emit("joinLot", String(lotId));
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.log("Socket disconnected:", reason);
+      setSocketConnected(false);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
+      setSocketConnected(false);
+    });
+
+    // Handle bid updates
+    socket.on("bidUpdate", (data) => {
+      console.log("Received bid update:", data);
+      setBidError("");
+      setIsPlacingBid(false);
+
+      const newBid = {
+        id: data.bid?.id || Date.now(),
+        amount: data.currentBid || data.bid?.amount,
+        user: data.bid?.user || "Anonymous",
+        time: new Date().toISOString(),
+        isOwn: data.bid?.userId === getUserInfo().userId,
+      };
+
+      setBids((prev) => [newBid, ...prev]);
+      setCurrentBid(data.currentBid);
+      setTotalBids((prev) =>
+        data.totalBids !== undefined ? data.totalBids : prev + 1
+      );
+    });
+
+    // Handle bid rejection
+    socket.on("bidRejected", (data) => {
+      console.log("Bid rejected:", data);
+      setBidError(data.reason || "Bid was rejected");
+      setIsPlacingBid(false);
+      if (data.currentBid !== undefined) {
+        setCurrentBid(data.currentBid);
+      }
+    });
+
+    // Handle initial lot data from server
+    socket.on("lotData", (data) => {
+      console.log("Received lot data:", data);
+      if (data.bids) {
+        setBids(data.bids.reverse()); // Show newest first
+      }
+      if (data.currentBid !== undefined) {
+        setCurrentBid(data.currentBid);
+      }
+      if (data.totalBids !== undefined) {
+        setTotalBids(data.totalBids);
+      }
+    });
+
+    return () => {
+      if (socket) {
+        socket.emit("leaveLot", String(lotId));
+        socket.disconnect();
+      }
+    };
+  }, [lotId, getUserInfo]);
+
+  // Fetch lot + auction data (initial)
   useEffect(() => {
     const fetchLot = async () => {
       try {
@@ -61,6 +175,12 @@ export default function LotDetailsPage() {
         }
 
         setLotData(lot);
+        setCurrentBid(lot.currentBid || lot.startingBid || 0);
+        setTotalBids(lot.totalBids || 0);
+
+        if (lot.bids && Array.isArray(lot.bids)) {
+          setBids(lot.bids.reverse());
+        }
 
         if (lot.auctionId) {
           try {
@@ -117,39 +237,66 @@ export default function LotDetailsPage() {
     return () => clearInterval(timer);
   }, [auction]);
 
-  // Place Bid
-  const placeBid = () => {
-    if (!lotData) return;
-    const bidValue = parseFloat(bidAmount);
-    const currentBid = lotData.currentBid || lotData.startingBid;
+  // Auto scroll to top of bids when new bid arrives
+  useEffect(() => {
+    if (bidsContainerRef.current) {
+      bidsContainerRef.current.scrollTop = 0;
+    }
+  }, [bids]);
 
-    if (!bidValue || bidValue <= currentBid) {
-      alert("Your bid must be higher than the current bid.");
+  // Place Bid
+  const placeBid = useCallback(() => {
+    if (!lotData || !socketRef.current || isPlacingBid) return;
+
+    const bidValue = parseFloat(bidAmount);
+    const minBid = currentBid || lotData.startingBid || 0;
+
+    if (!bidValue || isNaN(bidValue) || bidValue <= minBid) {
+      setBidError(`Your bid must be higher than $${minBid}`);
       return;
     }
 
-    // socket.emit("placeBid", { lotId, bid: { amount: bidValue, user: "demoUser" } });
+    setIsPlacingBid(true);
+    setBidError("");
+
+    const { userId, userName } = getUserInfo();
+
+    socketRef.current.emit("placeBid", {
+      lotId: String(lotData._id || lotId),
+      amount: bidValue,
+      user: userName,
+      userId: userId,
+    });
 
     setBidAmount("");
+  }, [bidAmount, lotData, lotId, currentBid, isPlacingBid, getUserInfo]);
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      placeBid();
+    }
   };
 
-  // Gallery controls
   const nextPhoto = () => {
-    if (lotData.photos?.length > 0) {
+    if (lotData?.photos?.length > 0) {
       setCurrentPhotoIndex((prev) =>
         prev === lotData.photos.length - 1 ? 0 : prev + 1
       );
     }
   };
   const prevPhoto = () => {
-    if (lotData.photos?.length > 0) {
+    if (lotData?.photos?.length > 0) {
       setCurrentPhotoIndex((prev) =>
         prev === 0 ? lotData.photos.length - 1 : prev - 1
       );
     }
   };
 
-  // UI states
+  const formatBidTime = (timeString) => {
+    const date = new Date(timeString);
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-500">
@@ -164,6 +311,9 @@ export default function LotDetailsPage() {
       </div>
     );
   }
+
+  const liveStream = auction?.liveStreamUrl;
+  const isAuctionEnded = timeLeft === "Auction Ended";
 
   return (
     <div className="bg-white min-h-screen">
@@ -181,7 +331,18 @@ export default function LotDetailsPage() {
       <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-2 gap-10">
         {/* Left: Media */}
         <div>
-          {lotData.photos?.length > 0 ? (
+          {liveStream ? (
+            <div className="rounded-xl overflow-hidden shadow-lg border border-gray-200">
+              <video
+                key={liveStream}
+                src={liveStream}
+                controls
+                autoPlay
+                muted
+                className="w-full h-[400px] bg-black"
+              />
+            </div>
+          ) : lotData.photos?.length > 0 ? (
             <div className="relative mb-6">
               <Image
                 src={lotData.photos[currentPhotoIndex]}
@@ -229,7 +390,23 @@ export default function LotDetailsPage() {
 
         {/* Right: Details */}
         <div>
-          <h1 className="text-4xl font-bold text-[#335566]">{lotData.title}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-4xl font-bold text-[#335566]">
+              {lotData.title}
+            </h1>
+            <span
+              className={`text-xs px-2 py-1 rounded ${
+                socketConnected
+                  ? "bg-green-100 text-green-700"
+                  : "bg-gray-100 text-gray-600"
+              }`}
+              title={
+                socketConnected ? "Live connection active" : "Connecting..."
+              }
+            >
+              {socketConnected ? "LIVE" : "CONNECTING"}
+            </span>
+          </div>
 
           <div className="mt-4 space-y-2">
             {lotData.abbi && (
@@ -260,15 +437,15 @@ export default function LotDetailsPage() {
             <p className="text-xl font-semibold text-gray-800">
               Current Bid:{" "}
               <span className="text-[#335566]">
-                ${lotData.currentBid || lotData.startingBid}
+                ${currentBid || lotData.startingBid}
               </span>
             </p>
             <p className="text-sm text-gray-500 mt-1">
               Starting Bid: ${lotData.startingBid}
             </p>
-            {lotData.totalBids > 0 && (
+            {totalBids > 0 && (
               <p className="text-sm text-gray-500 mt-1">
-                Total Bids: {lotData.totalBids}
+                Total Bids: {totalBids}
               </p>
             )}
             {auction && (
@@ -278,9 +455,7 @@ export default function LotDetailsPage() {
                 </p>
                 <p
                   className={`mt-3 font-semibold ${
-                    timeLeft === "Auction Ended"
-                      ? "text-red-500"
-                      : "text-green-600"
+                    isAuctionEnded ? "text-red-500" : "text-green-600"
                   }`}
                 >
                   Time Left: {timeLeft || "Loading..."}
@@ -290,21 +465,31 @@ export default function LotDetailsPage() {
           </div>
 
           {/* Bid Input */}
-          {timeLeft !== "Auction Ended" ? (
-            <div className="mt-6 flex">
-              <input
-                type="number"
-                placeholder="Enter your bid"
-                className="border text-black border-gray-300 px-4 py-3 rounded-l-lg w-full focus:outline-none focus:ring-2 focus:ring-[#6ED0CE]"
-                value={bidAmount}
-                onChange={(e) => setBidAmount(e.target.value)}
-              />
-              <button
-                onClick={placeBid}
-                className="bg-[#6ED0CE] px-8 py-3 rounded-r-lg font-semibold text-[#335566] hover:bg-[#4DB1B1] transition"
-              >
-                Place Bid
-              </button>
+          {!isAuctionEnded ? (
+            <div className="mt-6">
+              <div className="flex">
+                <input
+                  type="number"
+                  placeholder="Enter your bid"
+                  className="border text-black border-gray-300 px-4 py-3 rounded-l-lg w-full focus:outline-none focus:ring-2 focus:ring-[#6ED0CE]"
+                  value={bidAmount}
+                  onChange={(e) => setBidAmount(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  min={0}
+                  step="0.01"
+                  disabled={isPlacingBid}
+                />
+                <button
+                  onClick={placeBid}
+                  disabled={isPlacingBid}
+                  className="bg-[#6ED0CE] px-8 py-3 rounded-r-lg font-semibold text-[#335566] hover:bg-[#4DB1B1] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isPlacingBid ? "Placing..." : "Place Bid"}
+                </button>
+              </div>
+              {bidError && (
+                <p className="mt-2 text-sm text-red-600">{bidError}</p>
+              )}
             </div>
           ) : (
             <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -319,45 +504,54 @@ export default function LotDetailsPage() {
       {/* Live Bids Section */}
       <div className="max-w-7xl mx-auto px-4 py-10">
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-          <h2 className="text-2xl font-bold text-[#335566] mb-4">Live Bids</h2>
-          <div className="max-h-64 overflow-y-auto border border-gray-100 rounded-lg p-4 space-y-3">
-            {lotData?.bids?.length > 0 ? (
-              lotData.bids.map((bid, index) => (
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-[#335566]">Live Bids</h2>
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  socketConnected ? "bg-green-500 animate-pulse" : "bg-gray-400"
+                }`}
+              ></div>
+              <span className="text-xs text-gray-500">
+                {socketConnected ? "Connected" : "Disconnected"}
+              </span>
+            </div>
+          </div>
+
+          {bids.length > 0 ? (
+            <div
+              ref={bidsContainerRef}
+              className="space-y-3 max-h-[300px] overflow-y-auto pr-2"
+            >
+              {bids.map((bid) => (
                 <div
-                  key={index}
-                  className="flex justify-between items-center bg-gray-50 px-4 py-2 rounded-lg shadow-sm"
+                  key={bid.id}
+                  className={`flex items-center justify-between p-3 rounded-lg border ${
+                    bid.isOwn
+                      ? "bg-green-50 border-green-200"
+                      : "bg-gray-50 border-gray-200"
+                  }`}
                 >
-                  <span className="text-gray-700 font-medium">
-                    💰 ${bid.amount}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    {bid.user || "Anonymous"}
-                  </span>
+                  <div>
+                    <p className="font-semibold text-gray-800">
+                      {bid.user}
+                      {bid.isOwn && (
+                        <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                          You
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {formatBidTime(bid.time)}
+                    </p>
+                  </div>
+                  <p className="font-bold text-[#335566]">${bid.amount}</p>
                 </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center">
-                No bids yet. Be the first!
-              </p>
-            )}
-          </div>
-        </div>
-        {/* Dealer Details (Static Dummy for Now) */}
-        <div className="max-w-7xl mx-auto px-4 py-10">
-          <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-            <h2 className="text-2xl font-bold text-[#335566] mb-4">
-              Dealer Details
-            </h2>
-            <p className="text-gray-700">
-              <strong>Name:</strong> John Doe Motors
-            </p>
-            <p className="text-gray-700">
-              <strong>Email:</strong> johndoe@example.com
-            </p>
-            <p className="text-gray-700">
-              <strong>Phone:</strong> +1 (555) 123-4567
-            </p>
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">No bids yet</p>
+          )}
         </div>
       </div>
     </div>

@@ -128,6 +128,7 @@ export default function BuyerDashboard({ params }) {
 
       const res = await fetch(`/api/users/${userId}`);
       const data = await res.json();
+      
       if (!res.ok) throw new Error(data.error || "Failed to fetch profile");
       setProfile(data);
       setLoading(false);
@@ -361,6 +362,7 @@ export default function BuyerDashboard({ params }) {
                       </div>
                     </div>
                   </div>
+                
                 ))}
               </section>
 
