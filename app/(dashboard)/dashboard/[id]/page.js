@@ -167,12 +167,7 @@ export default function BuyerDashboard({ params }) {
       icon: Gavel,
       color: "blue",
     },
-    {
-      title: "Won Lots",
-      value: profile?.wonAuctions || 0,
-      icon: Star,
-      color: "green",
-    },
+   
   ];
 
   if (loading) {
