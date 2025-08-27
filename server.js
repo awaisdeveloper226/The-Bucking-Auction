@@ -1,12 +1,13 @@
-const { createServer } = require('http');
-const { Server } = require('socket.io');
-const next = require('next');
+// server.js
+const { createServer } = require("http");
+const { Server } = require("socket.io");
+const next = require("next");
 
-const dev = process.env.NODE_ENV !== 'production';
-const hostname = 'localhost';
+const dev = process.env.NODE_ENV !== "production";
+const hostname = "localhost";
 const port = process.env.PORT || 3000;
 
-// In-memory storage (replace with your database)
+// In-memory storage
 const lotData = new Map();
 const activeBidders = new Map();
 
@@ -15,122 +16,115 @@ const handler = app.getRequestHandler();
 
 app.prepare().then(() => {
   const httpServer = createServer(handler);
-  
+
   const io = new Server(httpServer, {
-    cors: {
-      origin: "*",
-      methods: ["GET", "POST"]
-    },
-    transports: ['websocket', 'polling'],
+    cors: { origin: "*", methods: ["GET", "POST"] },
+    transports: ["websocket", "polling"],
   });
 
-  io.on('connection', (socket) => {
+  io.on("connection", (socket) => {
     console.log(`Client connected: ${socket.id}`);
 
-    // Join a specific lot room
-    socket.on('joinLot', (lotId) => {
-      console.log(`Socket ${socket.id} joining lot ${lotId}`);
+    // Join a lot room
+    socket.on("joinLot", (lotId) => {
       socket.join(`lot_${lotId}`);
-      
-      // Send current lot data if available
+      console.log(`Socket ${socket.id} joined lot ${lotId}`);
+
       const currentLotData = lotData.get(lotId);
-      if (currentLotData) {
-        socket.emit('lotData', currentLotData);
-      }
-      
-      // Track active bidders
+      if (currentLotData) socket.emit("lotData", currentLotData);
+
       if (!activeBidders.has(lotId)) {
         activeBidders.set(lotId, new Set());
       }
       activeBidders.get(lotId).add(socket.id);
     });
 
-    // Leave a lot room
-    socket.on('leaveLot', (lotId) => {
-      console.log(`Socket ${socket.id} leaving lot ${lotId}`);
+    // Leave lot
+    socket.on("leaveLot", (lotId) => {
       socket.leave(`lot_${lotId}`);
-      
-      // Remove from active bidders
+      console.log(`Socket ${socket.id} left lot ${lotId}`);
       if (activeBidders.has(lotId)) {
         activeBidders.get(lotId).delete(socket.id);
       }
     });
 
-    // Handle bid placement
-    socket.on('placeBid', async (bidData) => {
-      const { lotId, amount, user, userId } = bidData;
-      console.log(`Received bid for lot ${lotId}:`, { amount, user, userId });
+    // Place bid (using client-sent info only)
+    socket.on("placeBid", (bidData) => {
+      const { lotId, amount, userId, userName, biddingNumber } = bidData;
+      console.log(`📩 Bid for lot ${lotId}:`, {
+        amount,
+        userId,
+        userName,
+        biddingNumber,
+      });
 
       try {
-        // Get current lot data
         let currentLot = lotData.get(lotId) || {
           currentBid: 0,
           totalBids: 0,
-          bids: []
+          bids: [],
         };
 
-        // Validate bid
         const bidAmount = parseFloat(amount);
         const currentBid = currentLot.currentBid || 0;
 
+        // validate bid
         if (isNaN(bidAmount) || bidAmount <= currentBid) {
-          socket.emit('bidRejected', {
+          socket.emit("bidRejected", {
             reason: `Bid must be higher than $${currentBid}`,
-            currentBid: currentBid
+            currentBid,
           });
           return;
         }
 
-        // Create new bid
+        // Create bid object
+        // Build newBid payload
+        // Build newBid payload
         const newBid = {
-          id: Date.now(),
+          _id: Date.now(), // or any unique id
           amount: bidAmount,
-          user: user || 'Anonymous',
-          userId: userId,
-          time: new Date().toISOString(),
-          socketId: socket.id
+          createdAt: new Date(),
+          userId: {
+            _id: userId,
+            userName, // keep full name
+            biddingNumber, // keep bidder number
+          },
         };
 
-        // Update lot data
+        // update in-memory lot data
         currentLot.currentBid = bidAmount;
         currentLot.totalBids = (currentLot.totalBids || 0) + 1;
         currentLot.bids = [newBid, ...(currentLot.bids || [])];
 
-        // Keep only last 100 bids
         if (currentLot.bids.length > 100) {
           currentLot.bids = currentLot.bids.slice(0, 100);
         }
 
-        // Store updated data
         lotData.set(lotId, currentLot);
 
-        // Here you would typically save to your database
-        // await saveLotToDatabase(lotId, currentLot);
-
-        // Broadcast bid update to all clients in the lot room
-        io.to(`lot_${lotId}`).emit('bidUpdate', {
+        // Broadcast to room
+        io.to(`lot_${lotId}`).emit("bidUpdate", {
           currentBid: bidAmount,
           totalBids: currentLot.totalBids,
           bid: newBid,
-          lotId: lotId
+          lotId,
         });
 
-        console.log(`Bid placed successfully for lot ${lotId}: $${bidAmount} by ${user}`);
-
-      } catch (error) {
-        console.error('Error processing bid:', error);
-        socket.emit('bidRejected', {
-          reason: 'Server error, please try again',
-          currentBid: lotData.get(lotId)?.currentBid || 0
+        console.log(
+          `✅ Bid accepted: $${bidAmount} by ${userName} (${biddingNumber})`
+        );
+      } catch (err) {
+        console.error("❌ Error processing bid:", err);
+        socket.emit("bidRejected", {
+          reason: "Server error, please try again",
+          currentBid: lotData.get(lotId)?.currentBid || 0,
         });
       }
     });
 
-    // Handle disconnect
-    socket.on('disconnect', (reason) => {
+    // Disconnect
+    socket.on("disconnect", (reason) => {
       console.log(`Client disconnected: ${socket.id}, reason: ${reason}`);
-      
-      // Remove from all active bidders
       for (let [lotId, bidders] of activeBidders.entries()) {
         if (bidders.has(socket.id)) {
           bidders.delete(socket.id);
@@ -139,36 +133,27 @@ app.prepare().then(() => {
       }
     });
 
-    // Handle connection errors
-    socket.on('error', (error) => {
-      console.error(`Socket error for ${socket.id}:`, error);
+    socket.on("error", (err) => {
+      console.error(`Socket error for ${socket.id}:`, err);
     });
   });
 
-  httpServer
-    .once('error', (err) => {
-      console.error(err);
-      process.exit(1);
-    })
-    .listen(port, () => {
-      console.log(`> Ready on http://${hostname}:${port}`);
-      console.log(`> Socket.IO server running`);
-    });
+  httpServer.listen(port, () => {
+    console.log(`> Ready on http://${hostname}:${port}`);
+    console.log(`> Socket.IO server running`);
+  });
 });
 
-// Optional: Function to initialize lot data from your existing database
-async function initializeLotData(lotId, lotInfo) {
-  const existingData = lotData.get(lotId);
-  if (!existingData) {
+// Helpers
+function initializeLotData(lotId, lotInfo) {
+  if (!lotData.has(lotId)) {
     lotData.set(lotId, {
       currentBid: lotInfo.currentBid || lotInfo.startingBid || 0,
       totalBids: lotInfo.totalBids || 0,
-      bids: lotInfo.bids || []
+      bids: lotInfo.bids || [],
     });
   }
 }
-
-// Optional: Function to get current lot data
 function getCurrentLotData(lotId) {
   return lotData.get(lotId) || null;
 }

@@ -64,7 +64,7 @@ export default function AdminPanel() {
       icon: <DollarSign size={20} />,
     },
     { id: "notifications", label: "Notifications", icon: <Bell size={20} /> },
-    { id: "chat", label: "Bidder Chat", icon: <MessageSquare size={20} /> },
+    
     { id: "inquiries", label: "User Inquiries", icon: <Mail size={20} /> },
   ];
 
@@ -94,8 +94,7 @@ export default function AdminPanel() {
         return <PaymentsReporting />;
       case "notifications":
         return <NotificationsManagement />;
-      case "chat":
-        return <BidderChatToggle />;
+      
       case "inquiries": // ✅ Added
         return <UserInquiries />;
       default:

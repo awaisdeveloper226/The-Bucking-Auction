@@ -29,6 +29,10 @@ export default function LotManagement() {
     abbi: "",
     sire: "",
     dam: "",
+    age: "",
+    sellerName: "",
+    sellerMobile: "",
+    sellerEmail: "",
     startingBid: "",
     photos: [], // Array of photo URLs
     videos: [], // Array of video URLs
@@ -172,6 +176,10 @@ export default function LotManagement() {
       abbi: "",
       sire: "",
       dam: "",
+      age: "",
+      sellerName: "",
+      sellerMobile: "",
+      sellerEmail: "",
       startingBid: "",
       photos: [],
       videos: [],
@@ -245,6 +253,10 @@ export default function LotManagement() {
       abbi: lot.abbi || "",
       sire: lot.sire || "",
       dam: lot.dam || "",
+      age: lot.age || "",
+      sellerName: lot.sellerName || "",
+      sellerMobile: lot.sellerMobile || "",
+      sellerEmail: lot.sellerEmail || "",
       startingBid: lot.startingBid?.toString() || "",
       photos: lot.photos || [],
       videos: lot.videos || [],
@@ -316,6 +328,38 @@ export default function LotManagement() {
           value={form.dam}
           onChange={handleChange}
           placeholder="Dam"
+          className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
+        />
+        <input
+          type="number"
+          name="age"
+          value={form.age}
+          onChange={handleChange}
+          placeholder="Age (years)"
+          className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
+        />
+        <input
+          type="text"
+          name="sellerName"
+          value={form.sellerName}
+          onChange={handleChange}
+          placeholder="Seller Name"
+          className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
+        />
+        <input
+          type="tel"
+          name="sellerMobile"
+          value={form.sellerMobile}
+          onChange={handleChange}
+          placeholder="Seller Mobile Number"
+          className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
+        />
+        <input
+          type="email"
+          name="sellerEmail"
+          value={form.sellerEmail}
+          onChange={handleChange}
+          placeholder="Seller Email"
           className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
         />
         <input
@@ -503,9 +547,22 @@ export default function LotManagement() {
                               <p className="text-sm text-gray-600">
                                 ABBI: {lot.abbi} | {lot.sire} × {lot.dam}
                               </p>
-                              <p className="text-sm text-gray-700">
-                                Starting Bid: ${lot.startingBid}
+                              <p className="text-sm text-gray-600">
+                                Age: {lot.age} years | Starting Bid: ${lot.startingBid}
                               </p>
+                              <p className="text-sm text-gray-600">
+                                Seller: {lot.sellerName || "N/A"}
+                              </p>
+                              {lot.sellerMobile && (
+                                <p className="text-xs text-gray-500">
+                                  Mobile: {lot.sellerMobile}
+                                </p>
+                              )}
+                              {lot.sellerEmail && (
+                                <p className="text-xs text-gray-500">
+                                  Email: {lot.sellerEmail}
+                                </p>
+                              )}
                               <p className="text-xs text-gray-500">
                                 Photos: {lot.photos?.length || 0} | Videos:{" "}
                                 {lot.videos?.length || 0}

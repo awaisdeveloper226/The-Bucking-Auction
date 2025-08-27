@@ -40,6 +40,10 @@ export async function POST(request) {
       abbi,
       sire,
       dam,
+      age,
+      sellerName,
+      sellerMobile,
+      sellerEmail,
       startingBid,
       photos,
       videos,
@@ -52,6 +56,17 @@ export async function POST(request) {
         { error: 'Title and auction selection are required' },
         { status: 400 }
       );
+    }
+
+    // Email validation if provided
+    if (sellerEmail && sellerEmail.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(sellerEmail)) {
+        return Response.json(
+          { error: 'Invalid email format' },
+          { status: 400 }
+        );
+      }
     }
     
     // Get the highest order number for this auction
@@ -67,6 +82,10 @@ export async function POST(request) {
       abbi: abbi || '',
       sire: sire || '',
       dam: dam || '',
+      age: age ? Number(age) : null,
+      sellerName: sellerName || '',
+      sellerMobile: sellerMobile || '',
+      sellerEmail: sellerEmail || '',
       startingBid: Number(startingBid) || 0,
       photos: photos || [],
       videos: videos || [],
@@ -106,6 +125,22 @@ export async function PUT(request) {
     }
     
     const body = await request.json();
+    
+    // Email validation if provided in update
+    if (body.sellerEmail && body.sellerEmail.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(body.sellerEmail)) {
+        return Response.json(
+          { error: 'Invalid email format' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Convert age to number if provided
+    if (body.age !== undefined && body.age !== null && body.age !== '') {
+      body.age = Number(body.age);
+    }
     
     const updatedLot = await Lot.findByIdAndUpdate(
       id,

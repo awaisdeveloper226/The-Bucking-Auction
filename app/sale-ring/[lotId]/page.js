@@ -8,6 +8,8 @@ import { io } from "socket.io-client";
 
 export default function LotDetailsPage() {
   const { lotId } = useParams();
+
+  // ----- States -----
   const [lotData, setLotData] = useState(null);
   const [auction, setAuction] = useState(null);
   const [timeLeft, setTimeLeft] = useState("");
@@ -20,28 +22,39 @@ export default function LotDetailsPage() {
   const [currentBid, setCurrentBid] = useState(0);
   const [totalBids, setTotalBids] = useState(0);
   const [isPlacingBid, setIsPlacingBid] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null); // ✅ user info
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
 
+  // ----- Refs -----
   const socketRef = useRef(null);
   const bidsContainerRef = useRef(null);
 
-  // Generate user info
-  const getUserInfo = useCallback(() => {
-    let userId = localStorage.getItem("userId");
-    if (!userId) {
-      userId = Math.random().toString(36).substr(2, 9);
-      localStorage.setItem("userId", userId);
-    }
+  // ----- Get user info -----
+  const getUserInfo = useCallback(async () => {
+    try {
+      const storedUserId = localStorage.getItem("userId");
+      if (!storedUserId) return null;
 
-    let userName = localStorage.getItem("userName");
-    if (!userName) {
-      userName = `Bidder-${userId.slice(-4)}`;
-      localStorage.setItem("userName", userName);
-    }
+      const res = await fetch(`/api/users/${storedUserId}`);
+      if (!res.ok) return null;
 
-    return { userId, userName };
+      const user = await res.json();
+      return {
+        userId: user._id,
+        userName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        biddingNumber: user.biddingNumber || "N/A",
+      };
+    } catch (err) {
+      console.error("Error fetching user info", err);
+      return null;
+    }
   }, []);
 
-  // ----- helpers -----
+  useEffect(() => {
+    getUserInfo().then(setCurrentUser);
+  }, [getUserInfo]);
+
+  // ----- Helpers -----
   const normalizeLot = (raw) => raw?.lot ?? raw?.data ?? raw;
   const normalizeLots = (raw) =>
     Array.isArray(raw)
@@ -62,21 +75,17 @@ export default function LotDetailsPage() {
   const toIdString = (val) =>
     typeof val === "string" ? val : (val?._id ?? val)?.toString?.() ?? "";
 
-  // Initialize socket connection
+  // ----- Socket.io -----
   useEffect(() => {
-    if (!lotId) return;
+    if (!lotId || !currentUser) return;
 
-    // Initialize socket server
     fetch("/api/socketio").catch(console.error);
 
-    // Create socket connection
     socketRef.current = io(
       process.env.NODE_ENV === "production"
         ? undefined
         : "http://localhost:3000",
-      {
-        transports: ["websocket", "polling"],
-      }
+      { transports: ["websocket", "polling"] }
     );
 
     const socket = socketRef.current;
@@ -97,18 +106,18 @@ export default function LotDetailsPage() {
       setSocketConnected(false);
     });
 
-    // Handle bid updates
     socket.on("bidUpdate", (data) => {
-      console.log("Received bid update:", data);
       setBidError("");
       setIsPlacingBid(false);
 
+      const bidUser = data.bid?.userId || {};
       const newBid = {
-        id: data.bid?.id || Date.now(),
-        amount: data.currentBid || data.bid?.amount,
-        user: data.bid?.user || "Anonymous",
-        time: new Date().toISOString(),
-        isOwn: data.bid?.userId === getUserInfo().userId,
+        id: data.bid?._id || Date.now(),
+        amount: data.bid?.amount,
+        biddingNumber: bidUser.biddingNumber || "N/A",
+        name: bidUser.userName || "Anonymous",
+        time: data.bid?.createdAt || new Date().toISOString(),
+        isOwn: currentUser && bidUser._id === currentUser.userId,
       };
 
       setBids((prev) => [newBid, ...prev]);
@@ -118,28 +127,27 @@ export default function LotDetailsPage() {
       );
     });
 
-    // Handle bid rejection
     socket.on("bidRejected", (data) => {
-      console.log("Bid rejected:", data);
       setBidError(data.reason || "Bid was rejected");
       setIsPlacingBid(false);
-      if (data.currentBid !== undefined) {
-        setCurrentBid(data.currentBid);
-      }
+      if (data.currentBid !== undefined) setCurrentBid(data.currentBid);
     });
 
-    // Handle initial lot data from server
     socket.on("lotData", (data) => {
-      console.log("Received lot data:", data);
       if (data.bids) {
-        setBids(data.bids.reverse()); // Show newest first
+        const formattedBids = data.bids.map((b) => ({
+          id: b._id,
+          amount: b.amount,
+          biddingNumber: b.userId?.biddingNumber || "N/A",
+          name: b.userId?.userName || "Anonymous",
+          time: b.createdAt || b.timestamp,
+          isOwn: currentUser && b.userId?._id === currentUser.userId,
+        }));
+        setBids(formattedBids.reverse());
       }
-      if (data.currentBid !== undefined) {
-        setCurrentBid(data.currentBid);
-      }
-      if (data.totalBids !== undefined) {
-        setTotalBids(data.totalBids);
-      }
+
+      if (data.currentBid !== undefined) setCurrentBid(data.currentBid);
+      if (data.totalBids !== undefined) setTotalBids(data.totalBids);
     });
 
     return () => {
@@ -148,9 +156,9 @@ export default function LotDetailsPage() {
         socket.disconnect();
       }
     };
-  }, [lotId, getUserInfo]);
+  }, [lotId, currentUser]);
 
-  // Fetch lot + auction data (initial)
+  // ----- Fetch Lot & Auction -----
   useEffect(() => {
     const fetchLot = async () => {
       try {
@@ -179,7 +187,17 @@ export default function LotDetailsPage() {
         setTotalBids(lot.totalBids || 0);
 
         if (lot.bids && Array.isArray(lot.bids)) {
-          setBids(lot.bids.reverse());
+          const formatted = lot.bids.map((b) => ({
+            id: b._id,
+            amount: b.amount,
+            biddingNumber: b.userId?.biddingNumber || "N/A",
+            name: b.userId
+              ? `${b.userId.firstName || ""} ${b.userId.lastName || ""}`.trim()
+              : "Anonymous",
+            time: b.createdAt || b.timestamp,
+            isOwn: currentUser && b.userId?._id === currentUser.userId,
+          }));
+          setBids(formatted.reverse());
         }
 
         if (lot.auctionId) {
@@ -210,9 +228,9 @@ export default function LotDetailsPage() {
     };
 
     if (lotId) fetchLot();
-  }, [lotId]);
+  }, [lotId, currentUser]);
 
-  // Countdown Timer
+  // ----- Countdown Timer -----
   useEffect(() => {
     if (!auction?.endDate) return;
     const timer = setInterval(() => {
@@ -237,16 +255,16 @@ export default function LotDetailsPage() {
     return () => clearInterval(timer);
   }, [auction]);
 
-  // Auto scroll to top of bids when new bid arrives
+  // ----- Auto scroll bids -----
   useEffect(() => {
     if (bidsContainerRef.current) {
       bidsContainerRef.current.scrollTop = 0;
     }
   }, [bids]);
 
-  // Place Bid
+  // ----- Place Bid -----
   const placeBid = useCallback(() => {
-    if (!lotData || !socketRef.current || isPlacingBid) return;
+    if (!lotData || !socketRef.current || isPlacingBid || !currentUser) return;
 
     const bidValue = parseFloat(bidAmount);
     const minBid = currentBid || lotData.startingBid || 0;
@@ -259,24 +277,30 @@ export default function LotDetailsPage() {
     setIsPlacingBid(true);
     setBidError("");
 
-    const { userId, userName } = getUserInfo();
-
     socketRef.current.emit("placeBid", {
       lotId: String(lotData._id || lotId),
       amount: bidValue,
-      user: userName,
-      userId: userId,
+      userId: currentUser.userId,
+      userName: currentUser.userName,
+      biddingNumber: currentUser.biddingNumber,
     });
 
+    fetch(`/api/lots/${lotData._id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        bid: { userId: currentUser.userId, amount: bidValue },
+      }),
+    }).catch((err) => console.error("Error saving bid:", err));
+
     setBidAmount("");
-  }, [bidAmount, lotData, lotId, currentBid, isPlacingBid, getUserInfo]);
+  }, [bidAmount, lotData, lotId, currentBid, isPlacingBid, currentUser]);
 
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      placeBid();
-    }
+    if (e.key === "Enter") placeBid();
   };
 
+  // ----- Photo Carousel -----
   const nextPhoto = () => {
     if (lotData?.photos?.length > 0) {
       setCurrentPhotoIndex((prev) =>
@@ -293,8 +317,11 @@ export default function LotDetailsPage() {
   };
 
   const formatBidTime = (timeString) => {
+    if (!timeString) return "";
     const date = new Date(timeString);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return isNaN(date)
+      ? ""
+      : date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
   if (loading) {
@@ -311,6 +338,22 @@ export default function LotDetailsPage() {
       </div>
     );
   }
+
+  const nextVideo = () => {
+    if (lotData?.videos?.length > 0) {
+      setCurrentVideoIndex((prev) =>
+        prev === lotData.videos.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+
+  const prevVideo = () => {
+    if (lotData?.videos?.length > 0) {
+      setCurrentVideoIndex((prev) =>
+        prev === 0 ? lotData.videos.length - 1 : prev - 1
+      );
+    }
+  };
 
   const liveStream = auction?.liveStreamUrl;
   const isAuctionEnded = timeLeft === "Auction Ended";
@@ -329,7 +372,7 @@ export default function LotDetailsPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {/* Left: Media */}
+        {/* Left: Media Carousel */}
         <div>
           {liveStream ? (
             <div className="rounded-xl overflow-hidden shadow-lg border border-gray-200">
@@ -342,44 +385,74 @@ export default function LotDetailsPage() {
                 className="w-full h-[400px] bg-black"
               />
             </div>
-          ) : lotData.photos?.length > 0 ? (
+          ) : lotData.photos?.length > 0 || lotData.videos?.length > 0 ? (
             <div className="relative mb-6">
-              <Image
-                src={lotData.photos[currentPhotoIndex]}
-                alt={`${lotData.title} - Photo ${currentPhotoIndex + 1}`}
-                width={800}
-                height={500}
-                className="rounded-xl shadow-lg w-full object-contain"
-              />
-              {lotData.photos.length > 1 && (
+              {/* Display Photos */}
+              {lotData.photos?.length > 0 && (
                 <>
-                  <button
-                    onClick={prevPhoto}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"
-                  >
-                    ‹
-                  </button>
-                  <button
-                    onClick={nextPhoto}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"
-                  >
-                    ›
-                  </button>
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
-                    {currentPhotoIndex + 1} / {lotData.photos.length}
-                  </div>
+                  <Image
+                    src={lotData.photos[currentPhotoIndex]}
+                    alt={`${lotData.title} - Photo ${currentPhotoIndex + 1}`}
+                    width={800}
+                    height={500}
+                    className="rounded-xl shadow-lg w-full object-contain"
+                  />
+                  {lotData.photos.length > 1 && (
+                    <>
+                      <button
+                        onClick={prevPhoto}
+                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"
+                      >
+                        ‹
+                      </button>
+                      <button
+                        onClick={nextPhoto}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"
+                      >
+                        ›
+                      </button>
+                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+                        {currentPhotoIndex + 1} / {lotData.photos.length}
+                      </div>
+                    </>
+                  )}
                 </>
               )}
+
+              {/* Display Videos */}
+              {lotData.videos?.length > 0 && (
+                <div className="mt-4">
+                  <video
+                    key={currentVideoIndex}
+                    src={lotData.videos[currentVideoIndex]}
+                    controls
+                    className="w-full h-[400px] rounded-xl shadow-lg object-cover"
+                  />
+                  {lotData.videos.length > 1 && (
+                    <div className="flex justify-between mt-2">
+                      <button
+                        onClick={prevVideo}
+                        className="bg-black bg-opacity-50 text-white px-3 py-1 rounded hover:bg-opacity-70"
+                      >
+                        ‹ Prev
+                      </button>
+                      <span className="text-sm text-gray-100">
+                        {currentVideoIndex + 1} / {lotData.videos.length}
+                      </span>
+                      <button
+                        onClick={nextVideo}
+                        className="bg-black bg-opacity-50 text-white px-3 py-1 rounded hover:bg-opacity-70"
+                      >
+                        Next ›
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <span className="absolute top-4 left-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold shadow">
                 {lotData.status || "Active"}
               </span>
-            </div>
-          ) : lotData.video ? (
-            <div className="rounded-xl overflow-hidden shadow-lg border border-gray-200">
-              <video controls className="w-full h-[400px] bg-black">
-                <source src={lotData.video} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
             </div>
           ) : (
             <div className="bg-gray-200 rounded-xl h-96 flex items-center justify-center">
@@ -408,6 +481,7 @@ export default function LotDetailsPage() {
             </span>
           </div>
 
+          {/* Pedigree & Details */}
           <div className="mt-4 space-y-2">
             {lotData.abbi && (
               <p className="text-gray-700">
@@ -416,21 +490,51 @@ export default function LotDetailsPage() {
             )}
             {lotData.sire && (
               <p className="text-gray-700">
-                <strong>Sire:</strong> {lotData.sire}
+                <strong>SIRE:</strong> {lotData.sire}
               </p>
             )}
             {lotData.dam && (
               <p className="text-gray-700">
-                <strong>Dam:</strong> {lotData.dam}
+                <strong>DAM:</strong> {lotData.dam}
+              </p>
+            )}
+            {lotData.age && (
+              <p className="text-gray-700">
+                <strong>Age:</strong> {lotData.age} years
               </p>
             )}
           </div>
 
+          {/* Description */}
           {lotData.description && (
-            <p className="mt-4 text-gray-700 leading-relaxed">
-              {lotData.description}
-            </p>
+            <div className="mt-4 max-h-48 overflow-y-auto overflow-x-hidden p-4 border border-gray-200 rounded-lg bg-white shadow-sm">
+              <p className="text-gray-700 leading-relaxed break-words whitespace-pre-wrap">
+                {lotData.description}
+              </p>
+            </div>
           )}
+
+          {/* Seller Info */}
+          <div className="mt-6 bg-[#f8fdfd] border border-[#e0f2f2] rounded-xl p-5 shadow-sm space-y-1">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              Seller Information
+            </h3>
+            {lotData.sellerName && (
+              <p>
+                <strong>Name:</strong> {lotData.sellerName}
+              </p>
+            )}
+            {lotData.sellerMobile && (
+              <p>
+                <strong>Mobile:</strong> {lotData.sellerMobile}
+              </p>
+            )}
+            {lotData.sellerEmail && (
+              <p>
+                <strong>Email:</strong> {lotData.sellerEmail}
+              </p>
+            )}
+          </div>
 
           {/* Auction Info */}
           <div className="mt-6 bg-[#f8fdfd] border border-[#e0f2f2] rounded-xl p-5 shadow-sm">
@@ -466,92 +570,68 @@ export default function LotDetailsPage() {
 
           {/* Bid Input */}
           {!isAuctionEnded ? (
-            <div className="mt-6">
-              <div className="flex">
-                <input
-                  type="number"
-                  placeholder="Enter your bid"
-                  className="border text-black border-gray-300 px-4 py-3 rounded-l-lg w-full focus:outline-none focus:ring-2 focus:ring-[#6ED0CE]"
-                  value={bidAmount}
-                  onChange={(e) => setBidAmount(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  min={0}
-                  step="0.01"
-                  disabled={isPlacingBid}
-                />
-                <button
-                  onClick={placeBid}
-                  disabled={isPlacingBid}
-                  className="bg-[#6ED0CE] px-8 py-3 rounded-r-lg font-semibold text-[#335566] hover:bg-[#4DB1B1] transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isPlacingBid ? "Placing..." : "Place Bid"}
-                </button>
-              </div>
-              {bidError && (
-                <p className="mt-2 text-sm text-red-600">{bidError}</p>
-              )}
+            <div className="mt-6 flex gap-3">
+              <input
+                type="number"
+                placeholder="Enter your bid"
+                value={bidAmount}
+                onChange={(e) => setBidAmount(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#335566]"
+              />
+              <button
+                onClick={placeBid}
+                disabled={isPlacingBid}
+                className="bg-[#335566] text-white px-5 py-2 rounded-lg shadow hover:bg-[#223344] disabled:opacity-50"
+              >
+                {isPlacingBid ? "Placing..." : "Place Bid"}
+              </button>
             </div>
           ) : (
-            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600 font-semibold">
-                This auction has ended
-              </p>
-            </div>
+            <p className="mt-6 text-red-500 font-semibold">
+              Auction has ended. Bidding closed.
+            </p>
           )}
-        </div>
-      </div>
 
-      {/* Live Bids Section */}
-      <div className="max-w-7xl mx-auto px-4 py-10">
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-[#335566]">Live Bids</h2>
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  socketConnected ? "bg-green-500 animate-pulse" : "bg-gray-400"
-                }`}
-              ></div>
-              <span className="text-xs text-gray-500">
-                {socketConnected ? "Connected" : "Disconnected"}
-              </span>
-            </div>
+          {bidError && <p className="mt-2 text-sm text-red-500">{bidError}</p>}
+
+          {/* Bid History */}
+          <div
+            ref={bidsContainerRef}
+            className="mt-8 max-h-72 overflow-y-auto border border-gray-200 rounded-lg p-4 shadow-sm bg-gray-50"
+          >
+            <h2 className="text-lg font-semibold text-gray-800 mb-3">
+              Bid History
+            </h2>
+            {bids.length === 0 ? (
+              <p className="text-gray-500 text-sm">No bids yet.</p>
+            ) : (
+              <ul className="space-y-3">
+                {bids.map((bid) => (
+                  <li
+                    key={bid.id}
+                    className={`flex justify-between items-center p-3 rounded-lg ${
+                      bid.isOwn
+                        ? "bg-green-50 border border-green-200"
+                        : "bg-white border border-gray-200"
+                    }`}
+                  >
+                    <div>
+                      <p className="font-medium text-gray-800">
+                        {bid.biddingNumber} – {bid.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {formatBidTime(bid.time)}
+                      </p>
+                    </div>
+                    <span className="text-lg font-semibold text-[#335566]">
+                      ${bid.amount}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-
-          {bids.length > 0 ? (
-            <div
-              ref={bidsContainerRef}
-              className="space-y-3 max-h-[300px] overflow-y-auto pr-2"
-            >
-              {bids.map((bid) => (
-                <div
-                  key={bid.id}
-                  className={`flex items-center justify-between p-3 rounded-lg border ${
-                    bid.isOwn
-                      ? "bg-green-50 border-green-200"
-                      : "bg-gray-50 border-gray-200"
-                  }`}
-                >
-                  <div>
-                    <p className="font-semibold text-gray-800">
-                      {bid.user}
-                      {bid.isOwn && (
-                        <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                          You
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {formatBidTime(bid.time)}
-                    </p>
-                  </div>
-                  <p className="font-bold text-[#335566]">${bid.amount}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500">No bids yet</p>
-          )}
         </div>
       </div>
     </div>

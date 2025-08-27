@@ -13,12 +13,13 @@ const bidSchema = new mongoose.Schema({
     required: true,
     min: [0, 'Bid cannot be negative']
   },
-  timestamp: {
+  createdAt: {
     type: Date,
     default: Date.now
   }
-});
+}, { _id: true });
 
+// --- Main Lot schema ---
 const LotSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -27,51 +28,34 @@ const LotSchema = new mongoose.Schema({
     maxlength: [200, 'Title cannot exceed 200 characters']
   },
 
-  description: {
+  description: { type: String, trim: true, maxlength: [1000, 'Description cannot exceed 1000 characters'] },
+  abbi: { type: String, trim: true, maxlength: [50, 'ABBI cannot exceed 50 characters'] },
+  sire: { type: String, trim: true, maxlength: [100, 'Sire name cannot exceed 100 characters'] },
+  dam: { type: String, trim: true, maxlength: [100, 'Dam name cannot exceed 100 characters'] },
+  sellerName: { type: String, trim: true, maxlength: [100, 'Seller name cannot exceed 100 characters'] },
+  sellerMobile: { type: String, trim: true, maxlength: [20, 'Mobile number cannot exceed 20 characters'] },
+  sellerEmail: {
     type: String,
     trim: true,
-    maxlength: [1000, 'Description cannot exceed 1000 characters']
+    maxlength: [100, 'Email cannot exceed 100 characters'],
+    validate: {
+      validator: function (v) {
+        return !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+      },
+      message: 'Invalid email address'
+    }
   },
 
-  abbi: {
-    type: String,
-    trim: true,
-    maxlength: [50, 'ABBI cannot exceed 50 characters']
-  },
+  startingBid: { type: Number, min: [0, 'Starting bid cannot be negative'], default: 0 },
+  currentBid: { type: Number, min: [0, 'Current bid cannot be negative'], default: 0 },
 
-  sire: {
-    type: String,
-    trim: true,
-    maxlength: [100, 'Sire name cannot exceed 100 characters']
-  },
-
-  dam: {
-    type: String,
-    trim: true,
-    maxlength: [100, 'Dam name cannot exceed 100 characters']
-  },
-
-  startingBid: {
-    type: Number,
-    min: [0, 'Starting bid cannot be negative'],
-    default: 0
-  },
-
-  currentBid: {
-    type: Number,
-    min: [0, 'Current bid cannot be negative'],
-    default: 0
-  },
-
-  // ✅ New: Bidding history
+  // ✅ Bidding history
   bids: [bidSchema],
 
   photos: [{
     type: String,
     validate: {
-      validator: function (url) {
-        return /^https?:\/\/.+/.test(url);
-      },
+      validator: function (url) { return /^https?:\/\/.+/.test(url); },
       message: 'Invalid photo URL'
     }
   }],
@@ -79,104 +63,56 @@ const LotSchema = new mongoose.Schema({
   videos: [{
     type: String,
     validate: {
-      validator: function (url) {
-        return /^https?:\/\/.+/.test(url);
-      },
+      validator: function (url) { return /^https?:\/\/.+/.test(url); },
       message: 'Invalid video URL'
     }
   }],
 
-  auctionId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Auction',
-    required: [true, 'Auction ID is required']
-  },
+  auctionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Auction', required: [true, 'Auction ID is required'] },
 
-  order: {
-    type: Number,
-    default: 0,
-    min: [0, 'Order cannot be negative']
-  },
+  order: { type: Number, default: 0, min: [0, 'Order cannot be negative'] },
+  status: { type: String, enum: ['active', 'sold', 'withdrawn', 'pending'], default: 'active' },
 
-  status: {
-    type: String,
-    enum: ['active', 'sold', 'withdrawn', 'pending'],
-    default: 'active'
-  },
+  // Winner info
+  winnerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  winningBid: { type: Number, default: 0, min: [0, 'Winning bid cannot be negative'] },
+  soldAt: { type: Date, default: null },
 
-  // Winner information (when lot is sold)
-  winnerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    default: null
-  },
+  totalBids: { type: Number, default: 0, min: [0, 'Total bids cannot be negative'] },
 
-  winningBid: {
-    type: Number,
-    default: 0,
-    min: [0, 'Winning bid cannot be negative']
-  },
-
-  soldAt: {
-    type: Date,
-    default: null
-  },
-
-  // Bidding information
-  totalBids: {
-    type: Number,
-    default: 0,
-    min: [0, 'Total bids cannot be negative']
-  },
-
-  // Additional metadata
   weight: { type: Number, min: [0, 'Weight cannot be negative'] },
   age: { type: String, trim: true },
   breed: { type: String, trim: true, maxlength: [50, 'Breed cannot exceed 50 characters'] },
   color: { type: String, trim: true, maxlength: [30, 'Color cannot exceed 30 characters'] },
 
-  // Health and certification
   healthCertificates: [{
     name: String,
     url: String,
     uploadedAt: { type: Date, default: Date.now }
   }],
-
   vaccinations: [{
     name: String,
     date: Date,
     veterinarian: String
   }],
 
-  // Location information
-  location: {
-    ranch: String,
-    city: String,
-    state: String,
-    zipCode: String
-  },
+  location: { ranch: String, city: String, state: String, zipCode: String },
 
-  // Consigner information
   consignerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   consignerName: { type: String, trim: true },
 
-  // Auction settings
   reservePrice: { type: Number, min: [0, 'Reserve price cannot be negative'], default: 0 },
   hasReserve: { type: Boolean, default: false },
 
-  // Timing
   biddingStartTime: { type: Date },
   biddingEndTime: { type: Date },
 
-  // Notes and special instructions
   specialInstructions: { type: String, maxlength: [500, 'Special instructions cannot exceed 500 characters'] },
   internalNotes: { type: String, maxlength: [500, 'Internal notes cannot exceed 500 characters'] },
 
-  // SEO and display
   slug: { type: String, trim: true, lowercase: true },
   featured: { type: Boolean, default: false },
 
-  // Analytics
   views: { type: Number, default: 0, min: [0, 'Views cannot be negative'] },
   watchedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 }, {
@@ -233,6 +169,7 @@ LotSchema.statics.getByAuction = function (auctionId, includeInactive = false) {
 
   return this.find(query)
     .populate('auctionId', 'title name')
+    .populate('bids.userId', 'biddingNumber firstName lastName emailAddress') // ✅ auto-populate bidder info
     .sort({ order: 1, createdAt: 1 });
 };
 
