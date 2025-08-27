@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
@@ -17,6 +17,14 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [successData, setSuccessData] = useState(null);
   const [showModal, setShowModal] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      router.replace(`/dashboard/${userId}`);
+    }
+  }, [router]);
 
   const handleChange = (e) =>
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));

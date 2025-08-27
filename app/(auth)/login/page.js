@@ -1,13 +1,21 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({ emailAddress: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
+
+  // Redirect if already logged in
+  useEffect(() => {
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      router.replace(`/dashboard/${userId}`);
+    }
+  }, [router]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
