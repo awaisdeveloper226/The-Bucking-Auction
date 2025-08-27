@@ -126,12 +126,22 @@ export default function BuyerDashboard({ params }) {
         return;
       }
 
-      const res = await fetch(`/api/users/${userId}`);
-      const data = await res.json();
-      
-      if (!res.ok) throw new Error(data.error || "Failed to fetch profile");
-      setProfile(data);
-      setLoading(false);
+      try {
+        const res = await fetch(`/api/bidders`);
+        const data = await res.json();
+
+        const user = data.find((u) => u.id === userId);
+        if (!user) {
+          router.replace("/login");
+          return;
+        }
+        setProfile(user);
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+        setError("Failed to fetch profile");
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchProfile();
@@ -155,6 +165,7 @@ export default function BuyerDashboard({ params }) {
 
   const menuItems = [
     { name: "Overview", icon: Home },
+    { name: "Profile", icon: User },
     { name: "Lots", icon: Package },
     { name: "Watchlist", icon: Star },
     { name: "Settings", icon: Settings },
@@ -167,7 +178,6 @@ export default function BuyerDashboard({ params }) {
       icon: Gavel,
       color: "blue",
     },
-   
   ];
 
   if (loading) {
@@ -182,7 +192,6 @@ export default function BuyerDashboard({ params }) {
       </div>
     );
   }
-
 
   return (
     <div className="min-h-screen flex bg-gray-50 pt-16 pb-20 sm:pt-20 sm:pb-24 lg:pt-0 lg:pb-0">
@@ -277,29 +286,8 @@ export default function BuyerDashboard({ params }) {
                 {activeMenu}
               </h1>
             </div>
-            {/* <button className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg flex-shrink-0">
-              <User
-                size={16}
-                className="sm:w-[18px] sm:h-[18px] text-gray-600"
-              />
-            </button> */}
           </div>
         </div>
-
-        {/* Desktop Header */}
-        {/* <header className="hidden lg:block bg-white shadow-sm rounded-lg mx-4 xl:mx-6 mt-4 xl:mt-6 mb-4 xl:mb-6">
-          <div className="flex justify-between items-center p-3 xl:p-4">
-            <h1 className="text-lg xl:text-xl font-semibold text-gray-900">
-              {activeMenu}
-            </h1>
-            <button className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg transition">
-              <User size={18} className="xl:w-5 xl:h-5 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700 hidden sm:inline">
-                {profile.name}
-              </span>
-            </button>
-          </div>
-        </header> */}
 
         {/* Content */}
         <div className="p-3 sm:p-4 lg:p-4 xl:p-6 space-y-4 sm:space-y-6 flex-1 lg:mt-0 mt-16 overflow-auto">
@@ -333,7 +321,6 @@ export default function BuyerDashboard({ params }) {
                       </div>
                     </div>
                   </div>
-                
                 ))}
               </section>
 
@@ -366,7 +353,45 @@ export default function BuyerDashboard({ params }) {
             </>
           )}
 
-          {/* Placeholder for other sections */}
+          {/* Profile Tab */}
+          {activeMenu === "Profile" && profile && (
+            <div className="max-w-md mx-auto bg-white shadow-sm rounded-lg border p-6 mt-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                My Profile
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <span className="font-medium text-gray-700">Name:</span>{" "}
+                  {profile.name}
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Email:</span>{" "}
+                  {profile.email}
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">
+                    Bidding Number:
+                  </span>{" "}
+                  {profile.biddingNumber || "N/A"}
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Status:</span>{" "}
+                  {profile.status}
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Phone:</span>{" "}
+                  {profile.phone}
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Address:</span>{" "}
+                  {profile.address}
+                </div>
+                
+              </div>
+            </div>
+          )}
+
+          {/* Lots Tab */}
           {activeMenu === "Lots" && (
             <>
               {auction && (
@@ -464,6 +489,7 @@ export default function BuyerDashboard({ params }) {
             </>
           )}
 
+          {/* Watchlist Tab */}
           {activeMenu === "Watchlist" && (
             <>
               <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
@@ -521,6 +547,8 @@ export default function BuyerDashboard({ params }) {
               )}
             </>
           )}
+
+          {/* Settings Tab */}
           {activeMenu === "Settings" && (
             <div className="max-w-md mx-auto bg-white shadow-sm rounded-lg border p-6 mt-17">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
