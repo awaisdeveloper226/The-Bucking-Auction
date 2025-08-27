@@ -401,13 +401,13 @@ export default function LotDetailsPage() {
                     <>
                       <button
                         onClick={prevPhoto}
-                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"
+                        className="absolute left-4 top-52 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"
                       >
                         ‹
                       </button>
                       <button
                         onClick={nextPhoto}
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"
+                        className="absolute right-4 top-52 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"
                       >
                         ›
                       </button>
@@ -432,13 +432,11 @@ export default function LotDetailsPage() {
                     <div className="flex justify-between mt-2">
                       <button
                         onClick={prevVideo}
-                        className="bg-black bg-opacity-50 text-white px-3 py-1 rounded hover:bg-opacity-70"
+                        className="bg-black bg-opacity-50 text-white px-3 py-1 rounded hover:bg-opacity-70  "
                       >
                         ‹ Prev
                       </button>
-                      <span className="text-sm text-gray-100">
-                        {currentVideoIndex + 1} / {lotData.videos.length}
-                      </span>
+                      
                       <button
                         onClick={nextVideo}
                         className="bg-black bg-opacity-50 text-white px-3 py-1 rounded hover:bg-opacity-70"
