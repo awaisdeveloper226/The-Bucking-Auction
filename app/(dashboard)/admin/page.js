@@ -161,18 +161,18 @@ export default function AdminPanel() {
         </div>
 
         {/* Bottom: Logout */}
-        <div
-          className={`p-4 border-t ${
-            isMobile ? "sticky bottom-0 bg-white z-50" : ""
-          }`}
-        >
-          <button
-            onClick={handleLogout}
-            className="flex items-center w-full px-3 py-2 rounded-lg text-sm font-medium text-red-500 hover:bg-gray-200 transition"
+        {(isMobile || sidebarOpen) && (
+          <div
+            className={`p-4 border-t ${isMobile ? "sticky bottom-0 bg-white z-50" : ""}`}
           >
-            Logout
-          </button>
-        </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center w-full px-3 py-2 rounded-lg text-sm font-medium text-red-500 hover:bg-gray-200 transition"
+            >
+              Logout
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Main Content */}
