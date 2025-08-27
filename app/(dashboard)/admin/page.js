@@ -5,10 +5,8 @@ import {
   Package,
   Users,
   DollarSign,
-  BarChart,
   Bell,
   Mail,
-  MessageSquare,
   Menu,
   X,
 } from "lucide-react";
@@ -17,24 +15,21 @@ import LotManagement from "@/components/LotManagement";
 import BidderManagement from "@/components/BidderManagement";
 import PaymentsReporting from "@/components/Payments";
 import NotificationsManagement from "@/components/Notifications";
-import BidderChatToggle from "@/components/BidderChat";
 import UserInquiries from "@/components/UserInquiries";
+import { useRouter } from "next/navigation";
 
 export default function AdminPanel() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("auctions");
   const [isMobile, setIsMobile] = useState(false);
+  const router = useRouter();
 
   // Check if device is mobile
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
-      // Close sidebar on mobile by default
-      if (window.innerWidth < 768) {
-        setSidebarOpen(false);
-      }
+      if (window.innerWidth < 768) setSidebarOpen(false);
     };
-
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
@@ -42,13 +37,9 @@ export default function AdminPanel() {
 
   // Handle scroll lock when sidebar is open on mobile
   useEffect(() => {
-    if (isMobile && sidebarOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
+    if (isMobile && sidebarOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "unset";
 
-    // Cleanup on unmount
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -64,22 +55,22 @@ export default function AdminPanel() {
       icon: <DollarSign size={20} />,
     },
     { id: "notifications", label: "Notifications", icon: <Bell size={20} /> },
-    
     { id: "inquiries", label: "User Inquiries", icon: <Mail size={20} /> },
   ];
 
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
-    // Close sidebar on mobile when tab is selected
-    if (isMobile) {
-      setSidebarOpen(false);
-    }
+    if (isMobile) setSidebarOpen(false);
   };
 
   const handleOverlayClick = () => {
-    if (isMobile) {
-      setSidebarOpen(false);
-    }
+    if (isMobile) setSidebarOpen(false);
+  };
+
+  const handleLogout = async () => {
+    await fetch("/api/admin/logout", { method: "POST" });
+    localStorage.removeItem("admin");
+    router.push("/admin/login");
   };
 
   const renderContent = () => {
@@ -94,8 +85,7 @@ export default function AdminPanel() {
         return <PaymentsReporting />;
       case "notifications":
         return <NotificationsManagement />;
-      
-      case "inquiries": // ✅ Added
+      case "inquiries":
         return <UserInquiries />;
       default:
         return null;
@@ -104,7 +94,7 @@ export default function AdminPanel() {
 
   return (
     <div className="flex min-h-screen bg-gray-100 relative">
-      {/* Mobile Menu Button - Fixed position when sidebar is closed on mobile */}
+      {/* Mobile Menu Button */}
       {isMobile && !sidebarOpen && (
         <div className="md:hidden absolute top-2 left-4 ">
           <button
@@ -134,35 +124,54 @@ export default function AdminPanel() {
                 } w-64`
               : `${sidebarOpen ? "w-64" : "w-16"} transition-all duration-300`
           }
-          bg-white border-r shadow-lg flex flex-col
+          bg-white border-r shadow-lg flex flex-col justify-between
         `}
       >
-        <div className="flex items-center justify-between p-4 border-b">
-          <h1
-            className={`text-lg font-bold ${sidebarOpen ? "block" : "hidden"}`}
-          >
-            Admin Panel
-          </h1>
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2">
-            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
-        <nav className="flex-1 p-2">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleTabClick(item.id)}
-              className={`flex items-center w-full px-3 py-2 rounded-lg mb-1 text-sm font-medium transition ${
-                activeTab === item.id
-                  ? "bg-blue-500 text-white"
-                  : "hover:bg-gray-200 text-gray-700"
+        {/* Top: Header & Menu */}
+        <div>
+          <div className="flex items-center justify-between p-4 border-b">
+            <h1
+              className={`text-lg font-bold ${
+                sidebarOpen ? "block" : "hidden"
               }`}
             >
-              {item.icon}
-              {sidebarOpen && <span className="ml-2">{item.label}</span>}
+              Admin Panel
+            </h1>
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2"
+            >
+              {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
-          ))}
-        </nav>
+          </div>
+
+          <nav className="flex-1 p-2">
+            {menuItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleTabClick(item.id)}
+                className={`flex items-center w-full px-3 py-2 rounded-lg mb-1 text-sm font-medium transition ${
+                  activeTab === item.id
+                    ? "bg-blue-500 text-white"
+                    : "hover:bg-gray-200 text-gray-700"
+                }`}
+              >
+                {item.icon}
+                {sidebarOpen && <span className="ml-2">{item.label}</span>}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Bottom: Logout */}
+        <div className="p-4 border-t">
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-3 py-2 rounded-lg text-sm font-medium text-red-500 hover:bg-gray-200 transition"
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       {/* Main Content */}
