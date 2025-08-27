@@ -6,7 +6,7 @@ export async function GET() {
   try {
     await connectToDB();
     const users = await User.find({})
-      .select("firstName lastName emailAddress biddingNumber isVerified isSuspended createdAt updatedAt")
+      .select("firstName lastName emailAddress biddingNumber isVerified isSuspended createdAt updatedAt cellPhone physicalAddress")
       .lean();
 
     const transformed = users.map((u) => ({
@@ -16,8 +16,10 @@ export async function GET() {
       biddingNumber: u.biddingNumber || "",
       status: u.isSuspended ? "Suspended" : "Active",
       isSuspended: u.isSuspended || false, // ensure all have this field
-      ip: "-",
-      lastActivity: "-",
+      ip: "-", // optional, keep as placeholder
+      lastActivity: "-", // optional, keep as placeholder
+      phone: u.cellPhone || "N/A",
+      address: u.physicalAddress || "N/A",
     }));
 
     return new Response(JSON.stringify(transformed), {

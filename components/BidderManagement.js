@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Ban, CheckCircle, Trash2, Edit2, X, Unlock } from "lucide-react";
+import { Ban, CheckCircle, Trash2, Edit2, X, Unlock,Eye } from "lucide-react";
 
 export default function BidderManagement() {
   const [bidders, setBidders] = useState([]);
@@ -14,6 +14,7 @@ export default function BidderManagement() {
   const [suspending, setSuspending] = useState(false);
 
   const [assigning, setAssigning] = useState(false);
+  const [viewBidder, setViewBidder] = useState(null); // For modal
 
   useEffect(() => {
     fetchBidders();
@@ -220,12 +221,48 @@ export default function BidderManagement() {
                   >
                     <Trash2 size={18} />
                   </button>
+                  {/* Eye button for modal */}
+                  <button
+                    onClick={() => setViewBidder(b)}
+                    className="text-indigo-500 hover:text-indigo-700"
+                    title="View Bidder"
+                  >
+                    <Eye size={18} />
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Modal */}
+      {viewBidder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-80 relative">
+            <h2 className="text-xl font-bold mb-4">Bidder Details</h2>
+            <p>
+              <strong>Name:</strong> {viewBidder.name}
+            </p>
+            <p>
+              <strong>Email:</strong> {viewBidder.email}
+            </p>
+            <p>
+              <strong>Phone:</strong> {viewBidder.phone || "N/A"}
+            </p>
+            <p>
+              <strong>Address:</strong> {viewBidder.address || "N/A"}
+            </p>
+
+            <button
+              onClick={() => setViewBidder(null)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
+            >
+              X
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {deleteBidderId && (
