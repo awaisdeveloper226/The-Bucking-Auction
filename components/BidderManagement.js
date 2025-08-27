@@ -13,11 +13,13 @@ export default function BidderManagement() {
   const [confirmSuspend, setConfirmSuspend] = useState(null);
   const [suspending, setSuspending] = useState(false);
 
+  const [assigning, setAssigning] = useState(false);
+
   useEffect(() => {
     fetchBidders();
   }, []);
 
-  // Fetch bidders from API and normalize status
+  // Fetch bidders from API
   const fetchBidders = async () => {
     try {
       const res = await fetch("/api/bidders");
@@ -29,11 +31,11 @@ export default function BidderManagement() {
       setLoading(false);
     }
   };
+
   const handleSuspend = async () => {
     if (!confirmSuspend) return;
     try {
       setSuspending(true);
-
       const res = await fetch(`/api/bidders/${confirmSuspend.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -42,7 +44,7 @@ export default function BidderManagement() {
 
       const data = await res.json();
       if (data.success) {
-        await fetchBidders(); // Refresh UI
+        await fetchBidders();
         setConfirmSuspend(null);
       } else {
         alert(data.message || "Failed to update status");
@@ -54,14 +56,30 @@ export default function BidderManagement() {
     }
   };
 
-  const assignBidderNumber = () => {
+  // ✅ Update bidder number in DB
+  // ✅ Update bidder number in DB
+  const assignBidderNumber = async () => {
     if (!assignForm.id || !assignForm.number) return;
-    setBidders(
-      bidders.map((b) =>
-        b.id === assignForm.id ? { ...b, bidderNumber: assignForm.number } : b
-      )
-    );
-    setAssignForm({ id: "", number: "" });
+    try {
+      setAssigning(true);
+      const res = await fetch(`/api/bidders/${assignForm.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ biddingNumber: assignForm.number }), // 👈 fixed key name
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        await fetchBidders(); // Refresh list from DB
+        setAssignForm({ id: "", number: "" });
+      } else {
+        alert(data.message || "Failed to assign bidder number");
+      }
+    } catch (err) {
+      console.error("Error assigning bidder number:", err);
+    } finally {
+      setAssigning(false);
+    }
   };
 
   const overrideBid = (id) => alert(`Bid overridden for bidder #${id}`);
@@ -119,9 +137,10 @@ export default function BidderManagement() {
           />
           <button
             onClick={assignBidderNumber}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            disabled={assigning}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
           >
-            Assign
+            {assigning ? "Assigning..." : "Assign"}
           </button>
         </div>
       </div>
@@ -150,7 +169,7 @@ export default function BidderManagement() {
                 <td className="p-3">{b.id}</td>
                 <td className="p-3 font-medium">{b.name}</td>
                 <td className="p-3">{b.email}</td>
-                <td className="p-3">{b.bidderNumber}</td>
+                <td className="p-3">{b.biddingNumber}</td>
                 <td className="p-3">
                   <span
                     className={`px-3 py-1 rounded-full text-sm ${

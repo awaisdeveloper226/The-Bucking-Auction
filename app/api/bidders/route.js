@@ -13,7 +13,7 @@ export async function GET() {
       id: u._id.toString(),
       name: `${u.firstName} ${u.lastName}`,
       email: u.emailAddress,
-      bidderNumber: u.biddingNumber || "",
+      biddingNumber: u.biddingNumber || "",
       status: u.isSuspended ? "Suspended" : "Active",
       isSuspended: u.isSuspended || false, // ensure all have this field
       ip: "-",

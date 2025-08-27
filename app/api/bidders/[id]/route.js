@@ -30,38 +30,40 @@ export async function PATCH(req, { params }) {
   try {
     await connectToDB();
     const { id } = params;
-    const { suspend } = await req.json();
+    const { suspend, biddingNumber } = await req.json();
 
-    if (typeof suspend !== "boolean") {
-      return new Response(
-        JSON.stringify({ success: false, message: "Invalid suspend flag" }),
+    const updateData = {};
+    if (typeof suspend === "boolean") updateData.isSuspended = suspend;
+    if (biddingNumber !== undefined) updateData.biddingNumber = biddingNumber;
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json(
+        { success: false, message: "No valid fields provided to update" },
         { status: 400 }
       );
     }
 
-    const user = await User.findByIdAndUpdate(
-      id,
-      { isSuspended: suspend },
-      { new: true }
-    );
+    const user = await User.findByIdAndUpdate(id, updateData, { new: true });
 
     if (!user) {
-      return new Response(
-        JSON.stringify({ success: false, message: "User not found" }),
+      return NextResponse.json(
+        { success: false, message: "User not found" },
         { status: 404 }
       );
     }
 
-    return new Response(
-      JSON.stringify({
+    return NextResponse.json(
+      {
         success: true,
         status: user.isSuspended ? "Suspended" : "Active",
-      }),
+        biddingNumber: user.biddingNumber,
+      },
       { status: 200 }
     );
   } catch (err) {
-    return new Response(
-      JSON.stringify({ success: false, message: err.message }),
+    console.error("Patch error:", err);
+    return NextResponse.json(
+      { success: false, message: err.message },
       { status: 500 }
     );
   }

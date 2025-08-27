@@ -188,30 +188,6 @@ export default function BuyerDashboard({ params }) {
     );
   }
 
-  if (error || !profile) {
-    return (
-      <div className="min-h-screen flex justify-center items-center bg-gray-50 p-4 py-8">
-        <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 w-full max-w-sm text-center">
-          <div className="mx-auto flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-red-100 mb-4">
-            <X className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
-          </div>
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
-            Access Error
-          </h2>
-          <p className="text-red-600 mb-4 sm:mb-6 text-sm sm:text-base">
-            {error || "Profile not found."}
-          </p>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition text-sm sm:text-base"
-          >
-            <LogOut size={14} className="sm:w-4 sm:h-4" />
-            <span>Return to Login</span>
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex bg-gray-50 pt-16 pb-20 sm:pt-20 sm:pb-24 lg:pt-0 lg:pb-0">
