@@ -411,9 +411,7 @@ export default function LotDetailsPage() {
                       >
                         ›
                       </button>
-                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
-                        {currentPhotoIndex + 1} / {lotData.photos.length}
-                      </div>
+                     
                     </>
                   )}
                 </>
