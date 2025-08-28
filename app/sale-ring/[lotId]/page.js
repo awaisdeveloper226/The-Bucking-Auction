@@ -125,7 +125,7 @@ export default function LotDetailsPage() {
       setTotalBids((prev) =>
         data.totalBids !== undefined ? data.totalBids : prev + 1
       );
-      
+
       // Update bid amount to be at least the new current bid + 50
       const nextMinBid = (data.currentBid || 0) + 50;
       setBidAmount(nextMinBid.toString());
@@ -576,43 +576,47 @@ export default function LotDetailsPage() {
           {!isAuctionEnded ? (
             <div className="mt-6">
               <div className="flex flex-col sm:flex-row gap-3">
+                {/* Input field for custom bid */}
                 <div className="flex-1 flex items-center border border-gray-300 rounded-lg overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newAmount = Math.max(minBid, parseInt(bidAmount) - 50);
-                      setBidAmount(newAmount.toString());
-                    }}
-                    className="px-3 sm:px-4 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 transition-colors"
-                    disabled={parseInt(bidAmount) <= minBid}
-                  >
-                    -
-                  </button>
-                  <div className="flex-1 min-w-0 px-2 sm:px-4 py-2 text-center bg-white">
-                    <span className="block text-sm text-gray-500">Your Bid</span>
-                    <span className="block text-lg font-semibold">${bidAmount}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const newAmount = parseInt(bidAmount) + 50;
-                      setBidAmount(newAmount.toString());
-                    }}
-                    className="px-3 sm:px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors"
-                  >
-                    +
-                  </button>
+                  <input
+                    type="number"
+                    value={bidAmount}
+                    onChange={(e) => setBidAmount(e.target.value)}
+                    className="flex-1 min-w-0 px-2 sm:px-4 py-2 text-center bg-white outline-none"
+                    placeholder={`Min: $${
+                      (currentBid || lotData.startingBid) + 50
+                    }`}
+                  />
                 </div>
+
+                {/* Place Bid button */}
                 <button
-                  onClick={placeBid}
+                  onClick={() => {
+                    const minAllowed = (currentBid || lotData.startingBid) + 50;
+                    const enteredBid = parseInt(bidAmount);
+
+                    if (isNaN(enteredBid)) {
+                      alert("Please enter a valid bid amount.");
+                      return;
+                    }
+
+                    if (enteredBid < minAllowed) {
+                      alert(`Your bid must be at least $${minAllowed}`);
+                      return;
+                    }
+
+                    placeBid();
+                  }}
                   disabled={isPlacingBid}
                   className="bg-[#335566] text-white px-5 py-3 rounded-lg shadow hover:bg-[#223344] disabled:opacity-50 transition-colors whitespace-nowrap"
                 >
                   {isPlacingBid ? "Placing..." : "Place Bid"}
                 </button>
               </div>
+
               <p className="text-sm text-gray-500 mt-2 text-center sm:text-left">
-                Your bid must be higher than ${currentBid || lotData.startingBid}
+                Your bid must be at least $
+                {(currentBid || lotData.startingBid) + 50}
               </p>
             </div>
           ) : (
