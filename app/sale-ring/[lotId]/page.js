@@ -125,6 +125,10 @@ export default function LotDetailsPage() {
       setTotalBids((prev) =>
         data.totalBids !== undefined ? data.totalBids : prev + 1
       );
+      
+      // Update bid amount to be at least the new current bid + 50
+      const nextMinBid = (data.currentBid || 0) + 50;
+      setBidAmount(nextMinBid.toString());
     });
 
     socket.on("bidRejected", (data) => {
@@ -146,7 +150,11 @@ export default function LotDetailsPage() {
         setBids(formattedBids.reverse());
       }
 
-      if (data.currentBid !== undefined) setCurrentBid(data.currentBid);
+      if (data.currentBid !== undefined) {
+        setCurrentBid(data.currentBid);
+        // Set initial bid amount to current bid + 50
+        setBidAmount((data.currentBid + 50).toString());
+      }
       if (data.totalBids !== undefined) setTotalBids(data.totalBids);
     });
 
@@ -183,7 +191,9 @@ export default function LotDetailsPage() {
         }
 
         setLotData(lot);
-        setCurrentBid(lot.currentBid || lot.startingBid || 0);
+        const initialBid = lot.currentBid || lot.startingBid || 0;
+        setCurrentBid(initialBid);
+        setBidAmount((initialBid + 50).toString());
         setTotalBids(lot.totalBids || 0);
 
         if (lot.bids && Array.isArray(lot.bids)) {
@@ -292,8 +302,6 @@ export default function LotDetailsPage() {
         bid: { userId: currentUser.userId, amount: bidValue },
       }),
     }).catch((err) => console.error("Error saving bid:", err));
-
-    setBidAmount("");
   }, [bidAmount, lotData, lotId, currentBid, isPlacingBid, currentUser]);
 
   const handleKeyPress = (e) => {
@@ -357,6 +365,7 @@ export default function LotDetailsPage() {
 
   const liveStream = auction?.liveStreamUrl;
   const isAuctionEnded = timeLeft === "Auction Ended";
+  const minBid = (currentBid || lotData.startingBid || 0) + 50;
 
   return (
     <div className="bg-white min-h-screen">
@@ -565,47 +574,46 @@ export default function LotDetailsPage() {
 
           {/* Bid Input */}
           {!isAuctionEnded ? (
-            <div className="mt-6 flex gap-3">
-              <div className="flex-1 flex items-center border border-gray-300 rounded-lg overflow-hidden">
+            <div className="mt-6">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1 flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newAmount = Math.max(minBid, parseInt(bidAmount) - 50);
+                      setBidAmount(newAmount.toString());
+                    }}
+                    className="px-3 sm:px-4 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 transition-colors"
+                    disabled={parseInt(bidAmount) <= minBid}
+                  >
+                    -
+                  </button>
+                  <div className="flex-1 min-w-0 px-2 sm:px-4 py-2 text-center bg-white">
+                    <span className="block text-sm text-gray-500">Your Bid</span>
+                    <span className="block text-lg font-semibold">${bidAmount}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newAmount = parseInt(bidAmount) + 50;
+                      setBidAmount(newAmount.toString());
+                    }}
+                    className="px-3 sm:px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors"
+                  >
+                    +
+                  </button>
+                </div>
                 <button
-                  type="button"
-                  onClick={() =>
-                    setBidAmount((prev) =>
-                      prev
-                        ? Number(prev) - 50
-                        : (currentBid || lotData.startingBid) + 50
-                    )
-                  }
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
-                  disabled={
-                    Number(bidAmount) <= (currentBid || lotData.startingBid)
-                  }
-                >-</button>
-                <input
-                  type="text"
-                  value={bidAmount || (currentBid || lotData.startingBid) + 50}
-                  readOnly
-                  className="flex-1 text-center px-4 py-2 focus:outline-none bg-white cursor-default"
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setBidAmount((prev) =>
-                      prev
-                        ? Number(prev) + 50
-                        : (currentBid || lotData.startingBid) + 50
-                    )
-                  }
-                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200"
-                >+</button>
+                  onClick={placeBid}
+                  disabled={isPlacingBid}
+                  className="bg-[#335566] text-white px-5 py-3 rounded-lg shadow hover:bg-[#223344] disabled:opacity-50 transition-colors whitespace-nowrap"
+                >
+                  {isPlacingBid ? "Placing..." : "Place Bid"}
+                </button>
               </div>
-              <button
-                onClick={placeBid}
-                disabled={isPlacingBid}
-                className="bg-[#335566] text-white px-5 py-2 rounded-lg shadow hover:bg-[#223344] disabled:opacity-50"
-              >
-                {isPlacingBid ? "Placing..." : "Place Bid"}
-              </button>
+              <p className="text-sm text-gray-500 mt-2 text-center sm:text-left">
+                Your bid must be higher than ${currentBid || lotData.startingBid}
+              </p>
             </div>
           ) : (
             <p className="mt-6 text-red-500 font-semibold">
