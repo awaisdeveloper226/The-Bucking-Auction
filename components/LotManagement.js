@@ -455,6 +455,54 @@ export default function LotManagement() {
         />
       </div>
 
+      {/* Photo Upload Section */}
+      <div className="mb-4">
+        <label className="block font-medium mb-2">Photos</label>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handlePhotoUpload}
+              className="hidden"
+              id="photo-upload"
+              disabled={uploadingPhotos}
+            />
+            <label
+              htmlFor="photo-upload"
+              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition cursor-pointer disabled:opacity-50"
+            >
+              <Plus className="mr-2" size={18} />
+              {uploadingPhotos ? "Uploading..." : "Add Photos"}
+            </label>
+          </div>
+
+          {form.photos.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {form.photos.map((photo, index) => (
+                <div key={index} className="relative group">
+                  <div className="relative w-full h-full bg-gray-200 rounded-lg border overflow-hidden">
+                    <img
+                      src={photo}
+                      alt={`Photo ${index + 1}`}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(index)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Video Upload Section */}
       <div className="mb-4">
         <label className="block font-medium mb-2">Videos</label>
