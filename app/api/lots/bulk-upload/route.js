@@ -67,6 +67,11 @@ export async function POST(request) {
             order: lotData.order || newOrder,
             status: 'active',
             
+            // ✅ ADDED: Seller fields that were missing
+            sellerName: lotData.sellerName?.trim() || '',
+            sellerMobile: lotData.sellerMobile?.trim() || '',
+            sellerEmail: lotData.sellerEmail?.trim() || '',
+            
             // Optional fields from Excel
             weight: lotData.weight ? Number(lotData.weight) : undefined,
             age: lotData.age?.trim() || undefined,

@@ -183,7 +183,7 @@ export default function SaleRingPage() {
                   </span>
                 </p>
                 <button className="mt-4 w-full bg-[#335566] hover:bg-[#4a6f7d] text-white py-2 rounded font-medium transition">
-                  View Lot
+                  Bid Now!
                 </button>
               </div>
             </div>

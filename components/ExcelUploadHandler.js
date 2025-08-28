@@ -24,23 +24,20 @@ const ExcelUploadHandler = ({ auctions, onUploadComplete }) => {
   // Expected column headers (exact match required)
   const REQUIRED_HEADERS = [
     "title",
-    "description",
     "abbi",
-    "sire",
+    "sire", 
     "dam",
+    "age",
+    "sellerName",      // ✅ MOVED TO REQUIRED
+    "sellerMobile",    // ✅ MOVED TO REQUIRED  
+    "sellerEmail",     // ✅ MOVED TO REQUIRED
     "startingBid",
+    "description",
     "auctionId", // or 'auctionName' - we'll handle both
   ];
 
   const OPTIONAL_HEADERS = [
     "auctionName", // Alternative to auctionId
-    "weight",
-    "age",
-    "breed",
-    "color",
-    "location",
-    "consignerName",
-    "specialInstructions",
   ];
 
   const ALL_VALID_HEADERS = [...REQUIRED_HEADERS, ...OPTIONAL_HEADERS];
@@ -49,36 +46,30 @@ const ExcelUploadHandler = ({ auctions, onUploadComplete }) => {
   const downloadTemplate = () => {
     const templateData = [
       {
+        auctionName: "(Make sure auction exists first)", // Use auction name instead of ID
         title: "Lot #1 - Bull Calf Example",
-        description: "Strong bloodline, excellent genetics",
         abbi: "AB12345",
         sire: "Champion Bull A",
         dam: "Premium Cow B",
+        age: "8",
+        sellerName: "John Smith",           // ✅ FIXED: More realistic name
+        sellerMobile: "1234567890",
+        sellerEmail: "john@example.com",    // ✅ FIXED: Valid email format
         startingBid: 500,
-        auctionName: "Spring Bull Sale 2024", // Use auction name instead of ID
-        weight: 450,
-        age: "8 months",
-        breed: "Angus",
-        color: "Black",
-        location: "Ranch A, Texas",
-        consignerName: "John Smith",
-        specialInstructions: "Handle with care",
+        description: "Strong bloodline, excellent genetics",
       },
       {
-        title: "Lot #2 - Heifer Example",
-        description: "Excellent breeding potential",
-        abbi: "AB67890",
-        sire: "Elite Bull X",
-        dam: "Top Cow Y",
-        startingBid: 700,
-        auctionName: "Spring Bull Sale 2024",
-        weight: 380,
-        age: "10 months",
-        breed: "Hereford",
-        color: "Red/White",
-        location: "Ranch B, Oklahoma",
-        consignerName: "Jane Doe",
-        specialInstructions: "",
+        auctionName: "(Make sure auction exists first)", // Use auction name instead of ID)", 
+        title: "Lot #2 - Heifer Calf Example",
+        abbi: "AB12346",
+        sire: "Champion Bull B", 
+        dam: "Premium Cow C",
+        age: "6",
+        sellerName: "Jane Doe",             // ✅ FIXED: Different seller
+        sellerMobile: "0987654321",
+        sellerEmail: "jane@example.com",    // ✅ FIXED: Valid email format
+        startingBid: 750,
+        description: "Show quality heifer with excellent conformation",
       },
     ];
 
@@ -88,20 +79,17 @@ const ExcelUploadHandler = ({ auctions, onUploadComplete }) => {
 
     // Set column widths
     const colWidths = [
-      { wch: 25 }, // title
-      { wch: 40 }, // description
+      { wch: 40 }, // auctionName
+      { wch: 40 }, // title
       { wch: 12 }, // abbi
       { wch: 20 }, // sire
       { wch: 20 }, // dam
-      { wch: 12 }, // startingBid
-      { wch: 25 }, // auctionName
-      { wch: 10 }, // weight
       { wch: 12 }, // age
-      { wch: 15 }, // breed
-      { wch: 15 }, // color
-      { wch: 25 }, // location
-      { wch: 20 }, // consignerName
-      { wch: 30 }, // specialInstructions
+      { wch: 25 }, // sellerName
+      { wch: 15 }, // sellerMobile
+      { wch: 30 }, // sellerEmail
+      { wch: 15 }, // startingBid
+      { wch: 40 }, // description
     ];
     ws["!cols"] = colWidths;
 
@@ -119,6 +107,17 @@ const ExcelUploadHandler = ({ auctions, onUploadComplete }) => {
       if (required === "auctionId") {
         variants.push("auctionname", "auction_name", "auction name");
       }
+      // ✅ ADD: Handle seller field variations
+      if (required === "sellerName") {
+        variants.push("seller_name", "seller name");
+      }
+      if (required === "sellerMobile") {
+        variants.push("seller_mobile", "seller mobile", "sellermobile");
+      }
+      if (required === "sellerEmail") {
+        variants.push("seller_email", "seller email", "selleremail");
+      }
+      
       return !variants.some((variant) => cleanHeaders.includes(variant));
     });
 
@@ -136,8 +135,16 @@ const ExcelUploadHandler = ({ auctions, onUploadComplete }) => {
       const validVariants = [
         ...ALL_VALID_HEADERS.map((h) => h.toLowerCase()),
         "auctionname",
-        "auction_name",
+        "auction_name", 
         "auction name",
+        "seller_name",
+        "seller name",
+        "seller_mobile",
+        "seller mobile", 
+        "sellermobile",
+        "seller_email",
+        "seller email",
+        "selleremail",
       ];
       return clean && !validVariants.includes(clean);
     });
@@ -163,11 +170,20 @@ const ExcelUploadHandler = ({ auctions, onUploadComplete }) => {
       // Map variations to standard names
       const headerMap = {
         auctionname: "auctionName",
-        auction_name: "auctionName",
+        auction_name: "auctionName", 
         "auction name": "auctionName",
         startingbid: "startingBid",
         starting_bid: "startingBid",
         "starting bid": "startingBid",
+        "seller name": "sellerName",
+        seller_name: "sellerName",
+        sellername: "sellerName",  // ✅ ADDED: Handle sellername without underscore
+        selleremail: "sellerEmail", 
+        "seller email": "sellerEmail",
+        seller_email: "sellerEmail",
+        sellermobile: "sellerMobile",
+        "seller mobile": "sellerMobile",
+        seller_mobile: "sellerMobile",
       };
 
       return headerMap[clean] || clean;
@@ -221,13 +237,12 @@ const ExcelUploadHandler = ({ auctions, onUploadComplete }) => {
     });
   };
 
-  // Validate and process data
+  // ✅ FIXED: Validate and process data
   const validateAndProcessData = (headers, rows) => {
     const errors = [];
     const processedData = [];
-    const normalizedHeaders = normalizeHeaders(headers);
 
-    // Create header index mapping
+    const normalizedHeaders = normalizeHeaders(headers);
     const headerMap = {};
     normalizedHeaders.forEach((header, index) => {
       headerMap[header] = index;
@@ -237,96 +252,82 @@ const ExcelUploadHandler = ({ auctions, onUploadComplete }) => {
       const rowData = {};
       const rowErrors = [];
 
-      // Process each required field
+      // ✅ FIXED: Process ALL required fields uniformly
       REQUIRED_HEADERS.forEach((field) => {
         let value = "";
+        const fieldIndex = headerMap[field];
+
+        // ✅ DEBUG: Log field processing
+        if (['sellerName', 'sellerEmail', 'sellerMobile'].includes(field)) {
+          console.log(`Processing ${field}:`, {
+            fieldIndex,
+            rawValue: row[fieldIndex],
+            headerMap: Object.keys(headerMap)
+          });
+        }
 
         if (field === "auctionId") {
+          // Handle auction ID/name mapping
           const auctionNameIndex = headerMap["auctionName"];
-          const auctionIdIndex = headerMap["auctionId"];
-
           if (auctionNameIndex !== undefined) {
             const auctionName = row[auctionNameIndex]?.toString().trim();
             if (auctionName) {
-              // Robust mapping: trim and lowercase for exact match
               const matchedAuction = auctions.find(
-                (auction) =>
-                  auction.title?.trim().toLowerCase() ===
-                  auctionName.toLowerCase()
+                (a) =>
+                  a.title?.trim().toLowerCase() === auctionName.toLowerCase()
               );
-
-              if (matchedAuction) {
-                value = matchedAuction._id.toString(); // Ensure string conversion
-              } else {
+              if (matchedAuction) value = matchedAuction._id.toString();
+              else
                 rowErrors.push(
-                  `Row ${
-                    rowIndex + 2
-                  }: Auction "${auctionName}" not found. Available auctions: ${auctions
-                    .map((a) => a.title)
-                    .join(", ")}`
+                  `Row ${rowIndex + 2}: Auction "${auctionName}" not found`
                 );
-              }
             }
-          } else if (auctionIdIndex !== undefined) {
-            const auctionId = row[auctionIdIndex]?.toString().trim();
+          } else if (fieldIndex !== undefined) {
+            const auctionId = row[fieldIndex]?.toString().trim();
             const matchedAuction = auctions.find(
-              (auction) => auction._id.toString() === auctionId
+              (a) => a._id.toString() === auctionId
             );
-            if (matchedAuction) {
-              value = auctionId;
-            } else if (auctionId) {
+            if (matchedAuction) value = auctionId;
+            else
               rowErrors.push(
                 `Row ${rowIndex + 2}: Auction ID "${auctionId}" not found`
               );
-            }
           }
-        } else {
-          const fieldIndex = headerMap[field];
-          if (fieldIndex !== undefined) {
-            value = row[fieldIndex];
-          }
+        } else if (fieldIndex !== undefined) {
+          // ✅ FIXED: Process all other fields including seller fields
+          value = row[fieldIndex]?.toString().trim() || "";
         }
 
-        // Validation for required fields
-        if (field === "title" && !value) {
-          rowErrors.push(`Row ${rowIndex + 2}: Title is required`);
+        // ✅ FIXED: Validate required fields (only title and auctionId are truly required)
+        if ((field === "title" || field === "auctionId") && !value) {
+          rowErrors.push(`Row ${rowIndex + 2}: ${field} is required`);
         }
-        if (field === "auctionId" && !value) {
-          rowErrors.push(`Row ${rowIndex + 2}: Valid auction is required`);
-        }
-        if (field === "startingBid" && value !== "" && isNaN(Number(value))) {
+
+        // ✅ FIXED: Validate startingBid number format
+        if (field === "startingBid" && value && isNaN(Number(value))) {
           rowErrors.push(`Row ${rowIndex + 2}: Starting bid must be a number`);
         }
 
         rowData[field] = value || "";
       });
 
-      // Process optional fields
-      OPTIONAL_HEADERS.forEach((field) => {
-        const fieldIndex = headerMap[field];
-        if (fieldIndex !== undefined) {
-          rowData[field] = row[fieldIndex] || "";
-        }
-      });
+      // ✅ FIXED: Remove redundant optional field processing 
+      // (seller fields are now in REQUIRED_HEADERS)
 
       // Convert startingBid to number
-      if (rowData.startingBid) {
-        rowData.startingBid = Number(rowData.startingBid) || 0;
-      }
+      rowData.startingBid = Number(rowData.startingBid) || 0;
 
-      if (rowErrors.length > 0) {
-        errors.push(...rowErrors);
-      } else {
+      if (rowErrors.length) errors.push(...rowErrors);
+      else
         processedData.push({
           ...rowData,
-          photos: [], // Initialize empty arrays
+          photos: [],
           videos: [],
           order: rowIndex + 1,
         });
-      }
     });
 
-    return { processedData, errors };
+    return { processedData, errors, headerMap };
   };
 
   // Handle file upload
@@ -352,7 +353,7 @@ const ExcelUploadHandler = ({ auctions, onUploadComplete }) => {
       }
 
       // Validate and process data
-      const { processedData, errors } = validateAndProcessData(headers, rows);
+      const { processedData, errors, headerMap } = validateAndProcessData(headers, rows);
 
       if (errors.length > 0) {
         setValidationErrors(
@@ -365,6 +366,10 @@ const ExcelUploadHandler = ({ auctions, onUploadComplete }) => {
         return;
       }
 
+      // ✅ DEBUG: Log processed data to see what we're getting
+      console.log('Processed Data Sample:', processedData[0]);
+      console.log('Headers Map:', headerMap);
+      
       // Show preview
       setPreviewData(processedData);
       setShowPreview(true);
@@ -385,6 +390,9 @@ const ExcelUploadHandler = ({ auctions, onUploadComplete }) => {
     setUploading(true);
 
     try {
+      // ✅ DEBUG: Log the data being sent to API
+      console.log('Sending to API:', JSON.stringify(previewData.slice(0, 1), null, 2));
+      
       const response = await fetch("/api/lots/bulk-upload", {
         method: "POST",
         headers: {
@@ -534,6 +542,12 @@ const ExcelUploadHandler = ({ auctions, onUploadComplete }) => {
                     <p className="text-sm text-gray-600">
                       ABBI: {lot.abbi} | {lot.sire} × {lot.dam} | Starting: $
                       {lot.startingBid}
+                    </p>
+                    {/* ✅ ADDED: Show seller information in preview */}
+                    <p className="text-sm text-gray-600">
+                      Seller: {lot.sellerName || "N/A"} | 
+                      Mobile: {lot.sellerMobile || "N/A"} | 
+                      Email: {lot.sellerEmail || "N/A"}
                     </p>
                     <p className="text-xs text-gray-500">
                       Auction:{" "}

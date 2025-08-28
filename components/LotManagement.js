@@ -284,147 +284,175 @@ export default function LotManagement() {
       {/* Lot Form */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4 mb-4">
         {/* Auction Dropdown */}
-        <select
-          name="auctionId"
-          value={form.auctionId}
-          onChange={handleChange}
-          className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
-        >
-          <option value="">Select Auction</option>
-          {auctions.map((auction) => (
-            <option key={auction._id} value={auction._id}>
-              {auction.title}
-            </option>
-          ))}
-        </select>
+        <div>
+          <label htmlFor="auctionId" className="block mb-1 font-medium">
+            Auction
+          </label>
+          <select
+            id="auctionId"
+            name="auctionId"
+            value={form.auctionId}
+            onChange={handleChange}
+            className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
+          >
+            <option value="">Select Auction</option>
+            {auctions.map((auction) => (
+              <option key={auction._id} value={auction._id}>
+                {auction.title}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <input
-          type="text"
-          name="title"
-          value={form.title}
-          onChange={handleChange}
-          placeholder="Lot Title"
-          className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
-        />
-        <input
-          type="text"
-          name="abbi"
-          value={form.abbi}
-          onChange={handleChange}
-          placeholder="ABBI #"
-          className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
-        />
-        <input
-          type="text"
-          name="sire"
-          value={form.sire}
-          onChange={handleChange}
-          placeholder="Sire"
-          className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
-        />
-        <input
-          type="text"
-          name="dam"
-          value={form.dam}
-          onChange={handleChange}
-          placeholder="Dam"
-          className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
-        />
-        <input
-          type="number"
-          name="age"
-          value={form.age}
-          onChange={handleChange}
-          placeholder="Age (years)"
-          className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
-        />
-        <input
-          type="text"
-          name="sellerName"
-          value={form.sellerName}
-          onChange={handleChange}
-          placeholder="Seller Name"
-          className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
-        />
-        <input
-          type="tel"
-          name="sellerMobile"
-          value={form.sellerMobile}
-          onChange={handleChange}
-          placeholder="Seller Mobile Number"
-          className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
-        />
-        <input
-          type="email"
-          name="sellerEmail"
-          value={form.sellerEmail}
-          onChange={handleChange}
-          placeholder="Seller Email"
-          className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
-        />
-        <input
-          type="number"
-          name="startingBid"
-          value={form.startingBid}
-          onChange={handleChange}
-          placeholder="Starting Bid"
-          className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
-        />
+        <div>
+          <label htmlFor="title" className="block mb-1 font-medium">
+            Lot Title
+          </label>
+          <input
+            id="title"
+            type="text"
+            name="title"
+            value={form.title}
+            onChange={handleChange}
+            placeholder="Lot Title"
+            className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="abbi" className="block mb-1 font-medium">
+            ABBI #
+          </label>
+          <input
+            id="abbi"
+            type="text"
+            name="abbi"
+            value={form.abbi}
+            onChange={handleChange}
+            placeholder="ABBI #"
+            className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="sire" className="block mb-1 font-medium">
+            Sire
+          </label>
+          <input
+            id="sire"
+            type="text"
+            name="sire"
+            value={form.sire}
+            onChange={handleChange}
+            placeholder="Sire"
+            className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="dam" className="block mb-1 font-medium">
+            Dam
+          </label>
+          <input
+            id="dam"
+            type="text"
+            name="dam"
+            value={form.dam}
+            onChange={handleChange}
+            placeholder="Dam"
+            className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="age" className="block mb-1 font-medium">
+            Age (years)
+          </label>
+          <input
+            id="age"
+            type="number"
+            name="age"
+            value={form.age}
+            onChange={handleChange}
+            placeholder="Age (years)"
+            className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="sellerName" className="block mb-1 font-medium">
+            Seller Name
+          </label>
+          <input
+            id="sellerName"
+            type="text"
+            name="sellerName"
+            value={form.sellerName}
+            onChange={handleChange}
+            placeholder="Seller Name"
+            className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="sellerMobile" className="block mb-1 font-medium">
+            Seller Mobile Number
+          </label>
+          <input
+            id="sellerMobile"
+            type="tel"
+            name="sellerMobile"
+            value={form.sellerMobile}
+            onChange={handleChange}
+            placeholder="Seller Mobile Number"
+            className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="sellerEmail" className="block mb-1 font-medium">
+            Seller Email
+          </label>
+          <input
+            id="sellerEmail"
+            type="email"
+            name="sellerEmail"
+            value={form.sellerEmail}
+            onChange={handleChange}
+            placeholder="Seller Email"
+            className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="startingBid" className="block mb-1 font-medium">
+            Starting Bid
+          </label>
+          <input
+            id="startingBid"
+            type="number"
+            name="startingBid"
+            value={form.startingBid}
+            onChange={handleChange}
+            placeholder="Starting Bid"
+            className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
+          />
+        </div>
       </div>
 
-      <textarea
-        name="description"
-        value={form.description}
-        onChange={handleChange}
-        placeholder="Description"
-        rows={3}
-        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-4"
-      />
-
-      {/* Photo Upload Section */}
-      <div className="mb-4">
-        <label className="block font-medium mb-2">Photos</label>
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-2">
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handlePhotoUpload}
-              className="hidden"
-              id="photo-upload"
-              disabled={uploadingPhotos}
-            />
-            <label
-              htmlFor="photo-upload"
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition cursor-pointer disabled:opacity-50"
-            >
-              <Plus className="mr-2" size={18} />
-              {uploadingPhotos ? "Uploading..." : "Add Photos"}
-            </label>
-          </div>
-
-          {form.photos.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {form.photos.map((photo, index) => (
-                <div key={index} className="relative group">
-                  <img
-                    src={photo}
-                    alt={`Photo ${index + 1}`}
-                    className="w-full h-24 object-cover rounded-lg border"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removePhoto(index)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+      <div>
+        <label htmlFor="description" className="block mb-1 font-medium">
+          Description
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          value={form.description}
+          onChange={handleChange}
+          placeholder="Description"
+          rows={3}
+          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-4"
+        />
       </div>
 
       {/* Video Upload Section */}
@@ -548,7 +576,8 @@ export default function LotManagement() {
                                 ABBI: {lot.abbi} | {lot.sire} × {lot.dam}
                               </p>
                               <p className="text-sm text-gray-600">
-                                Age: {lot.age} years | Starting Bid: ${lot.startingBid}
+                                Age: {lot.age} years | Starting Bid: $
+                                {lot.startingBid}
                               </p>
                               <p className="text-sm text-gray-600">
                                 Seller: {lot.sellerName || "N/A"}
