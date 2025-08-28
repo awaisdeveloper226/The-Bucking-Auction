@@ -406,6 +406,8 @@ export default function AuctionManagement() {
           </table>
         )}
       </div>
+
+      
       <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
         <h3 className="text-xl font-semibold mb-2 flex items-center">
           <Play className="mr-2 text-blue-600" /> Live Auction View

@@ -411,7 +411,6 @@ export default function LotDetailsPage() {
                       >
                         ›
                       </button>
-                     
                     </>
                   )}
                 </>
@@ -434,7 +433,7 @@ export default function LotDetailsPage() {
                       >
                         ‹ Prev
                       </button>
-                      
+
                       <button
                         onClick={nextVideo}
                         className="bg-black bg-opacity-50 text-white px-3 py-1 rounded hover:bg-opacity-70"
@@ -567,14 +566,39 @@ export default function LotDetailsPage() {
           {/* Bid Input */}
           {!isAuctionEnded ? (
             <div className="mt-6 flex gap-3">
-              <input
-                type="number"
-                placeholder="Enter your bid"
-                value={bidAmount}
-                onChange={(e) => setBidAmount(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#335566]"
-              />
+              <div className="flex-1 flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setBidAmount((prev) =>
+                      prev
+                        ? Number(prev) - 50
+                        : (currentBid || lotData.startingBid) + 50
+                    )
+                  }
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                  disabled={
+                    Number(bidAmount) <= (currentBid || lotData.startingBid)
+                  }
+                >-</button>
+                <input
+                  type="text"
+                  value={bidAmount || (currentBid || lotData.startingBid) + 50}
+                  readOnly
+                  className="flex-1 text-center px-4 py-2 focus:outline-none bg-white cursor-default"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setBidAmount((prev) =>
+                      prev
+                        ? Number(prev) + 50
+                        : (currentBid || lotData.startingBid) + 50
+                    )
+                  }
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200"
+                >+</button>
+              </div>
               <button
                 onClick={placeBid}
                 disabled={isPlacingBid}
