@@ -32,6 +32,7 @@ export default function PaymentsReporting() {
             let buyerName = "Unknown Buyer";
             let buyerEmail = "No email";
             let buyerAddress = "No address";
+            let BuyerPhone = "No phone";
 
             if (lot.winnerId) {
               if (typeof lot.winnerId === "object" && lot.winnerId.name) {
@@ -47,6 +48,7 @@ export default function PaymentsReporting() {
                       `${user.firstName} ${user.lastName} ` || buyerName;
                     buyerEmail = user.emailAddress || "No email";
                     buyerAddress = user.physicalAddress || "No address";
+                    BuyerPhone = user.cellPhone || "No phone";
                   }
                 } catch (err) {
                   console.error(`Failed to fetch user ${lot.winnerId}`, err);
@@ -63,6 +65,7 @@ export default function PaymentsReporting() {
               price: lot.winningBid || 0,
               email: buyerEmail || "No email",
               address: buyerAddress || "No address",
+              phone: BuyerPhone || "No phone",
             };
           })
         );
@@ -162,6 +165,8 @@ export default function PaymentsReporting() {
     doc.setFont("helvetica", "normal");
     doc.text(invoice.buyer, 14, 48);
     doc.text(invoice.email, 14, 54);
+    doc.text(invoice.address, 14, 60);
+    doc.text(invoice.phone, 14, 66);
 
     // Invoice Table
     autoTable(doc, {
@@ -223,23 +228,7 @@ export default function PaymentsReporting() {
         />
       </div>
 
-      {/* Search + Filters */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        <Input
-          placeholder="Search lots or buyers..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 min-w-0"
-        />
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" className="flex-1 sm:flex-none">
-            Filter Paid
-          </Button>
-          <Button variant="outline" className="flex-1 sm:flex-none">
-            Filter Unpaid
-          </Button>
-        </div>
-      </div>
+     
 
       {/* Lots Table */}
       <Card className="shadow-md overflow-x-auto">
@@ -361,6 +350,7 @@ export default function PaymentsReporting() {
               <p className="text-gray-800">{selectedInvoice.buyer}</p>
               <p className="text-gray-500 text-sm">{selectedInvoice.email}</p>
               <p className="text-gray-500 text-sm">{selectedInvoice.address}</p>
+              <p className="text-gray-500 text-sm">{selectedInvoice.phone}</p>
             </div>
 
             {/* Invoice Table */}
