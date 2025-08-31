@@ -697,15 +697,7 @@ export default function LotDetailsPage() {
                 >
                   Time Left: {timeLeft || "Loading..."}
                 </p>
-                {timeLeft.includes("Auction Ended") ? null : (
-                  <p className="text-xs text-gray-500 mt-1">
-                    {timeLeft &&
-                    parseInt(timeLeft.split(" ")[0]) < 5 &&
-                    timeLeft.includes("m")
-                      ? "Bids will extend auction by 5 minutes"
-                      : ""}
-                  </p>
-                )}
+                
               </>
             )}
           </div>
