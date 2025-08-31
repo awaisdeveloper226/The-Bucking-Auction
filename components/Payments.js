@@ -143,7 +143,7 @@ export default function PaymentsReporting() {
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100);
-    doc.text("support@thebuckingauction.com", 14, 26); // shifted up (was 34)
+   
 
     // Invoice Info
     doc.setFontSize(14);
@@ -201,7 +201,7 @@ export default function PaymentsReporting() {
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100);
     doc.text(
-      "Thank you for your business! Please contact support@thebuckingauction.com for queries.",
+      "Thank you for your business!",
       105,
       290,
       { align: "center" }
@@ -330,9 +330,7 @@ export default function PaymentsReporting() {
                   Buckers Auction
                 </h2>
 
-                <p className="text-gray-500 text-sm">
-                  support@thebuckingauction.com
-                </p>
+               
               </div>
               <div className="text-right">
                 <h3 className="text-xl font-semibold">INVOICE</h3>
@@ -414,9 +412,7 @@ export default function PaymentsReporting() {
 
             {/* Footer */}
             <div className="text-center text-gray-500 text-sm border-t pt-3">
-              Thank you for your business! Please contact{" "}
-              <span className="font-medium">support@thebuckingauction.com</span>{" "}
-              for queries.
+              Thank you for your business! 
             </div>
           </div>
         </div>
