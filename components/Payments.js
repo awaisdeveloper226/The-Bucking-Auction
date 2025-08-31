@@ -228,8 +228,6 @@ export default function PaymentsReporting() {
         />
       </div>
 
-     
-
       {/* Lots Table */}
       <Card className="shadow-md overflow-x-auto">
         <CardContent>
@@ -307,8 +305,14 @@ export default function PaymentsReporting() {
 
       {/* Invoice Modal */}
       {selectedInvoice && (
-        <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-2xl relative">
+        <div
+          className="fixed inset-0 bg-black/30 flex justify-center items-center z-50 p-4"
+          onClick={handleCloseInvoice} // Click on overlay closes modal
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-2xl relative"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+          >
             {/* Close Button */}
             <Button
               size="sm"
