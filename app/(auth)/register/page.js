@@ -146,7 +146,7 @@ export default function SignupPage() {
                   Your Bidding Number: {successData.biddingNumber}
                 </p>
                 <p className="text-xs text-gray-500 mt-2">
-                  By accepting a bidding number, you acknowledge and agree to the Terms & Conditions of The Bucking Auction as outlined on our website. Please note that these terms may be updated at any time without prior notice.
+                  By accepting a bidding number, you acknowledge and agree to the Terms & Conditions of Buckers Auction as outlined on our website. Please note that these terms may be updated at any time without prior notice.
                 </p>
               </>
             )}

@@ -7,7 +7,7 @@ export default function PrivacyPolicy() {
           Privacy Policy
         </h1>
         <p className="text-gray-700 mb-4">
-          At <strong>The Bucking Auction</strong>, we value your privacy and are committed to protecting
+          At <strong>Buckers Auction</strong>, we value your privacy and are committed to protecting
           your personal information. This Privacy Policy explains how we collect,
           use, and safeguard your data when you use our platform.
         </p>

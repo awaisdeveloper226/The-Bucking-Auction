@@ -166,6 +166,33 @@ export default function LotDetailsPage() {
     };
   }, [lotId, currentUser]);
 
+  const finalizeAuction = useCallback(async () => {
+    if (!auction?._id) return;
+
+    try {
+      // For Option 2 (POST to /api/auctions/[id]/finalize)
+      const response = await fetch(`/api/auctions/${auction._id}/finalize`, {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Auction finalized:", result);
+
+        // Update local state to reflect the sale
+        const lotRes = await fetch(`/api/lots/${lotId}`, { cache: "no-store" });
+        if (lotRes.ok) {
+          const updatedLot = await lotRes.json();
+          setLotData(updatedLot);
+        }
+      } else {
+        console.error("Failed to finalize auction");
+      }
+    } catch (error) {
+      console.error("Error finalizing auction:", error);
+    }
+  }, [auction, lotId]);
+
   // ----- Fetch Lot & Auction -----
   useEffect(() => {
     const fetchLot = async () => {
@@ -241,14 +268,44 @@ export default function LotDetailsPage() {
   }, [lotId, currentUser]);
 
   // ----- Countdown Timer -----
+  // ----- Countdown Timer with Auto-Extend -----
+  // ----- Countdown Timer with Auto-Extend -----
   useEffect(() => {
     if (!auction?.endDate) return;
 
-    const timer = setInterval(() => {
+    // Function to extend the auction - defined outside the interval
+    const extendAuction = (minutes = 5) => {
+      const newEndTime = new Date(
+        auctionEndTime.getTime() + minutes * 60 * 1000
+      );
+
+      // Update the auction end time in the database
+      fetch(`/api/auctions/${auction._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          endDate: newEndTime.toISOString(),
+          extended: true,
+        }),
+      })
+        .then(() => {
+          // Update local state after successful API call
+          setAuction((prev) => ({
+            ...prev,
+            endDate: newEndTime.toISOString(),
+          }));
+        })
+        .catch((err) => console.error("Error extending auction:", err));
+
+      return newEndTime;
+    };
+
+    let auctionEndTime = new Date(auction.endDate);
+    let timer;
+
+    const updateTimer = () => {
       const now = new Date();
-      // Parse the UTC time from the database
-      const endTime = new Date(auction.endDate);
-      const distance = endTime.getTime() - now.getTime();
+      const distance = auctionEndTime.getTime() - now.getTime();
 
       if (distance <= 0) {
         setTimeLeft("Auction Ended");
@@ -264,11 +321,81 @@ export default function LotDetailsPage() {
             ? `${days}d ${hours}h ${minutes}m ${seconds}s`
             : `${hours}h ${minutes}m ${seconds}s`
         );
+
+        // Check if we're in the last 5 minutes
+        const isLastFiveMinutes = distance < 5 * 60 * 1000;
+        if (isLastFiveMinutes) {
+          // Add a visual indicator that we're in overtime
+          document
+            .getElementById("time-left")
+            ?.classList.add("text-orange-500", "font-bold");
+        } else {
+          document
+            .getElementById("time-left")
+            ?.classList.remove("text-orange-500", "font-bold");
+        }
       }
-    }, 1000);
+    };
+
+    // Start the timer
+    timer = setInterval(updateTimer, 1000);
+    updateTimer(); // Initial call
 
     return () => clearInterval(timer);
-  }, [auction]);
+  }, [auction, finalizeAuction]);
+
+  // Separate useEffect for handling bid extensions
+  useEffect(() => {
+    if (!socketRef.current || !auction?.endDate) return;
+
+    const handleBidForExtension = (data) => {
+      const now = new Date();
+      const auctionEndTime = new Date(auction.endDate);
+      const timeUntilEnd = auctionEndTime.getTime() - now.getTime();
+
+      // If bid is placed in the last 5 minutes, extend the auction
+      if (timeUntilEnd > 0 && timeUntilEnd < 5 * 60 * 1000) {
+        // Update the auction end time in the database
+        fetch(`/api/auctions/${auction._id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            endDate: new Date(
+              auctionEndTime.getTime() + 5 * 60 * 1000
+            ).toISOString(),
+            extended: true,
+          }),
+        })
+          .then(() => {
+            // Update local state after successful API call
+            setAuction((prev) => ({
+              ...prev,
+              endDate: new Date(
+                auctionEndTime.getTime() + 5 * 60 * 1000
+              ).toISOString(),
+            }));
+
+            // Notify all users about the extension
+            socketRef.current.emit("auctionExtended", {
+              lotId: String(lotId),
+              extendedUntil: new Date(
+                auctionEndTime.getTime() + 5 * 60 * 1000
+              ).toISOString(),
+              extendedBy: "5 minutes",
+            });
+          })
+          .catch((err) => console.error("Error extending auction:", err));
+      }
+    };
+
+    socketRef.current.on("bidUpdate", handleBidForExtension);
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.off("bidUpdate", handleBidForExtension);
+      }
+    };
+  }, [auction, lotId]);
 
   // ----- Auto scroll bids -----
   useEffect(() => {
@@ -556,19 +683,29 @@ export default function LotDetailsPage() {
             <p className="text-sm text-gray-500 mt-1">
               Starting Bid: ${lotData.startingBid}
             </p>
-            
+
             {auction && (
               <>
                 <p className="text-sm text-gray-500 mt-1">
                   Auction: {auction.title}
                 </p>
                 <p
+                  id="time-left"
                   className={`mt-3 font-semibold ${
                     isAuctionEnded ? "text-red-500" : "text-green-600"
                   }`}
                 >
                   Time Left: {timeLeft || "Loading..."}
                 </p>
+                {timeLeft.includes("Auction Ended") ? null : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {timeLeft &&
+                    parseInt(timeLeft.split(" ")[0]) < 5 &&
+                    timeLeft.includes("m")
+                      ? "Bids will extend auction by 5 minutes"
+                      : ""}
+                  </p>
+                )}
               </>
             )}
           </div>

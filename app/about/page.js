@@ -23,7 +23,7 @@ export default function AboutPage() {
             About Us
           </h1>
           <p className="text-lg md:text-xl opacity-90 max-w-2xl mx-auto animate-fadeIn delay-200">
-            At <span className="font-semibold">The Bucking Auction</span>, we
+            At <span className="font-semibold">Buckers Auction</span>, we
             connect buyers with our unique marketing techniques, supporting the{" "}
             <span className="font-semibold">bucking bull industry</span> while
             valuing every participant – the breeder, the buyer, the competitor,
@@ -67,7 +67,7 @@ export default function AboutPage() {
               Beyond auctions, Tenneile works closely with the Carsen Perry
               Legacy Fund, running an annual benefit auction with Sonny to honor
               and sustain the legacy. As demand grew, it became clear a larger,
-              more robust platform was needed – and thus, The Bucking Auction
+              more robust platform was needed – and thus, Buckers Auction
               was born.
             </p>
           </div>
@@ -97,7 +97,7 @@ export default function AboutPage() {
               family. We strive to place them in safe, loving environments where
               they can thrive and grow into champions.{" "}
               <span className="font-semibold">
-                The Bucking Auction is more than an auction—it’s a legacy in the
+                Buckers Auction is more than an auction—it’s a legacy in the
                 making and your gateway to the next champion.
               </span>
             </p>

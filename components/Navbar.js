@@ -140,13 +140,13 @@ export default function Navbar() {
         <Link href="/" className="flex items-center space-x-2">
           <Image
             src="/images/favicon.png"
-            alt="The Bucking Auction"
+            alt="Buckers Auction"
             width={45}
             height={45}
             className="rounded-full"
           />
           <span className="font-bold text-xl tracking-wide hover:text-[#6ED0CE] transition-colors">
-            The Bucking Auction
+            Buckers Auction
           </span>
         </Link>
       </div>

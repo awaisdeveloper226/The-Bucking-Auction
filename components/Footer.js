@@ -8,7 +8,7 @@ export default function Footer() {
         
         {/* Copyright */}
         <p className="text-sm text-gray-300 text-center md:text-left">
-          &copy; {new Date().getFullYear()} The Bucking Auction. All rights reserved.
+          &copy; {new Date().getFullYear()} Buckers Auction. All rights reserved.
         </p>
 
         {/* Links */}

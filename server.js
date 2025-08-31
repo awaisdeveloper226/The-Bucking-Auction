@@ -47,6 +47,20 @@ app.prepare().then(() => {
         activeBidders.get(lotId).delete(socket.id);
       }
     });
+    // Add this to your existing socket.io useEffect
+    socket.on("auctionExtended", (data) => {
+      if (data.lotId === String(lotId)) {
+        // Update the auction end time locally
+        setAuction((prev) => ({
+          ...prev,
+          endDate: data.extendedUntil,
+        }));
+
+        // Show a notification to the user
+        setBidError(`Auction extended by ${data.extendedBy}!`);
+        setTimeout(() => setBidError(""), 5000);
+      }
+    });
 
     // Place bid (using client-sent info only)
     socket.on("placeBid", (bidData) => {

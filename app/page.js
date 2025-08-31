@@ -95,7 +95,7 @@ export default function HomePage() {
 
         <div className="max-w-7xl mx-auto px-6 py-28 relative z-10 text-center">
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight drop-shadow-lg animate-fadeIn">
-            The Bucking Auction
+            Buckers Auction
           </h1>
           {/* Tagline */}
           <p className="mt-4 text-xl md:text-2xl max-w-3xl mx-auto text-[#CFE8E6] italic font-semibold animate-fadeIn delay-200">

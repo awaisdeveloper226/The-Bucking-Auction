@@ -5,7 +5,7 @@ export default function TermsOfServicePage() {
       {/* Page Header */}
       <div className="bg-[#5B0F00] text-white py-12 px-6 text-center">
         <h1 className="text-4xl font-bold">
-          The Buckers Auction – Terms &amp; Conditions
+          Buckers Auction – Terms &amp; Conditions
         </h1>
         <p className="mt-2 text-lg">
           Please read carefully before using our platform
@@ -17,10 +17,10 @@ export default function TermsOfServicePage() {
         {/* 1. Marketing Venue */}
         <section>
           <h2 className="text-2xl font-semibold mb-4">
-            1. The Buckers Auction Is a Marketing Venue
+            1. Buckers Auction Is a Marketing Venue
           </h2>
           <p>
-            The Buckers Auction is an online marketing platform that allows
+            Buckers Auction is an online marketing platform that allows
             breeders to list and market rodeo stock in a timed, bidding-style
             format. While our services use an “auction” style presentation, The
             Buckers Auction is not a traditional auction service or auctioneer.
@@ -40,9 +40,9 @@ export default function TermsOfServicePage() {
             <li>Bucking ability</li>
           </ul>
           <p className="mt-4">
-            The Buckers Auction does not guarantee payment from buyers or the
+            Buckers Auction does not guarantee payment from buyers or the
             completion of any transaction, or condition of any lot. Legal
-            ownership of a lot does not transfer through The Buckers Auction—it
+            ownership of a lot does not transfer through Buckers Auction—it
             is transferred directly between buyer and seller after the close of
             bidding.
           </p>
@@ -56,7 +56,7 @@ export default function TermsOfServicePage() {
         <section>
           <h2 className="text-2xl font-semibold mb-4">2. Seller (Consignor) Rules</h2>
           <p>
-            By listing (or donating) with The Buckers Auction, the consignor
+            By listing (or donating) with Buckers Auction, the consignor
             agrees to:
           </p>
           <ul className="list-disc ml-6 mt-2 space-y-2">
@@ -108,7 +108,7 @@ export default function TermsOfServicePage() {
             If health papers are required for transport or requested by the
             buyer, the seller must make them available, but the buyer is
             responsible for requesting them and paying any associated costs,
-            unless the seller agrees otherwise in writing. The Buckers Auction
+            unless the seller agrees otherwise in writing. Buckers Auction
             is not responsible for arranging, verifying, or paying for health
             papers.
           </p>
@@ -129,7 +129,7 @@ export default function TermsOfServicePage() {
               <strong>Payment &amp; Delivery</strong> – The winning bidder is
               required to pay for the lot in full and take possession within 7
               days of the auction close, unless other arrangements are made
-              directly in writing with the seller. The Buckers Auction is not
+              directly in writing with the seller. Buckers Auction is not
               responsible for enforcing payment or pickup. The winning bidder
               must contact the consignor promptly to arrange payment and
               delivery.
@@ -146,7 +146,7 @@ export default function TermsOfServicePage() {
             </li>
             <li>
               <strong>Mistaken Bids</strong> – If you make a bidding error,
-              notify The Buckers Auction immediately during the live auction to
+              notify Buckers Auction immediately during the live auction to
               correct it. Failure to do so may result in loss of bidding
               privileges.
             </li>
@@ -187,7 +187,7 @@ export default function TermsOfServicePage() {
           </h2>
           <ul className="list-disc ml-6 space-y-2">
             <li>
-              The Buckers Auction is not the fundraiser and is not affiliated
+              Buckers Auction is not the fundraiser and is not affiliated
               with the benefit, nonprofit, or cause.
             </li>
             <li>
@@ -201,7 +201,7 @@ export default function TermsOfServicePage() {
               to the recipient.
             </li>
             <li>
-              The Buckers Auction is not liable for disputes regarding benefit
+              Buckers Auction is not liable for disputes regarding benefit
               payments or charitable commitments.
             </li>
           </ul>

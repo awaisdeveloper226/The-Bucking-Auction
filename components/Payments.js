@@ -135,7 +135,7 @@ export default function PaymentsReporting() {
     // Company Header
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("The Bucking Auction", 14, 20);
+    doc.text("Buckers Auction", 14, 20);
 
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
@@ -334,7 +334,7 @@ export default function PaymentsReporting() {
             <div className="flex justify-between items-center border-b pb-4 mb-6">
               <div>
                 <h2 className="text-3xl font-bold text-gray-900">
-                  The Bucking Auction
+                  Buckers Auction
                 </h2>
 
                 <p className="text-gray-500 text-sm">

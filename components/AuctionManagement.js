@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 
 export default function AuctionManagement() {
   const [auctions, setAuctions] = useState([]);
+  const [lots, setLots] = useState([]);
+  const [bidders, setBidders] = useState({});
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [deleteId, setDeleteId] = useState(null); // track deletion modal
+  const [deleteId, setDeleteId] = useState(null);
   const router = useRouter();
 
   const [form, setForm] = useState({
@@ -34,6 +36,53 @@ export default function AuctionManagement() {
       }
     };
     fetchAuctions();
+  }, []);
+
+  useEffect(() => {
+    const fetchBidders = async () => {
+      try {
+        const res = await fetch("/api/bidders");
+        if (!res.ok) throw new Error("Failed to fetch bidders");
+        const users = await res.json();
+
+        // Create bidders map with both possible key formats
+        const map = {};
+        users.forEach((u) => {
+          // Store with the transformed 'id' key from your API
+          map[u.id] = u;
+          // Also store with the original MongoDB ObjectId format if different
+          // This ensures compatibility with both formats
+          if (u.id !== u._id) {
+            map[u._id] = u;
+          }
+        });
+        setBidders(map);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchBidders();
+  }, []);
+
+  useEffect(() => {
+    const fetchLots = async () => {
+      try {
+        const res = await fetch("/api/lots");
+        if (!res.ok) throw new Error("Failed to fetch lots");
+        const data = await res.json();
+        setLots(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLots();
+
+    const interval = setInterval(fetchLots, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleChange = (e) =>
@@ -63,6 +112,7 @@ export default function AuctionManagement() {
     const offset = date.getTimezoneOffset() * 60000;
     return new Date(date.getTime() - offset).toISOString().slice(0, 16);
   };
+
   const resetForm = () => {
     setForm({
       name: "",
@@ -73,10 +123,9 @@ export default function AuctionManagement() {
       flyer: null,
     });
     setEditingId(null);
-    window.scrollTo({ top: 0, behavior: "smooth" }); // scroll to top
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // ADD or UPDATE auction
   const saveAuction = async () => {
     if (!form.name || !form.start || !form.end) return;
     setUploading(true);
@@ -86,7 +135,6 @@ export default function AuctionManagement() {
       if (form.flyer instanceof File) flyerUrl = await uploadFlyer(form.flyer);
       else if (typeof form.flyer === "string") flyerUrl = form.flyer;
 
-      // Convert local datetime to UTC for storage
       const startUTC = new Date(form.start).toISOString();
       const endUTC = new Date(form.end).toISOString();
 
@@ -94,8 +142,8 @@ export default function AuctionManagement() {
         title: form.name,
         description: form.description,
         flyer: flyerUrl,
-        startDate: startUTC, // Use UTC time
-        endDate: endUTC, // Use UTC time
+        startDate: startUTC,
+        endDate: endUTC,
         startingBid: Number(form.reserve),
         status: form.visibility.toLowerCase(),
         autoExtend: form.autoExtend,
@@ -171,17 +219,68 @@ export default function AuctionManagement() {
     }
   };
 
+  // Helper function to get bidder info with better error handling
+  const getBidderInfo = (bid) => {
+    let userId = "";
+    
+    try {
+      // Handle different possible formats of bid.user
+      if (typeof bid.user === "object" && bid.user !== null) {
+        if (bid.user._id) {
+          userId = String(bid.user._id);
+        } else if (bid.user.toString) {
+          userId = bid.user.toString();
+        }
+      } else if (bid.user) {
+        userId = String(bid.user);
+      }
+      
+      // Also try bid.userId if bid.user doesn't exist
+      if (!userId && bid.userId) {
+        if (typeof bid.userId === "object" && bid.userId !== null) {
+          if (bid.userId._id) {
+            userId = String(bid.userId._id);
+          } else if (bid.userId.toString) {
+            userId = bid.userId.toString();
+          }
+        } else {
+          userId = String(bid.userId);
+        }
+      }
+    } catch (e) {
+      console.error("Error processing bid user ID:", e, bid);
+    }
+
+    // Try to find user in bidders map
+    const user = bidders[userId];
+    
+    if (user) {
+      return {
+        name: user.name,
+        biddingNumber: user.biddingNumber || "N/A",
+        amount: bid.amount
+      };
+    } else {
+      // Log for debugging
+      console.log("User not found for ID:", userId, "Available bidder IDs:", Object.keys(bidders));
+      return {
+        name: "Unknown User",
+        biddingNumber: "N/A", 
+        amount: bid.amount
+      };
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 bg-white rounded-2xl shadow-md space-y-6 relative">
       <h2 className="text-2xl font-bold mb-6">Auction Management</h2>
-      {/* Auction Form */}{" "}
+      
+      {/* Auction Form */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        {" "}
         <div className="flex flex-col">
-          {" "}
           <label className="mb-1 font-medium text-gray-700">
             Auction Name
-          </label>{" "}
+          </label>
           <input
             type="text"
             name="name"
@@ -189,13 +288,13 @@ export default function AuctionManagement() {
             onChange={handleChange}
             placeholder="Enter auction name"
             className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
-          />{" "}
-        </div>{" "}
+          />
+        </div>
+        
         <div className="flex flex-col md:col-span-2">
-          {" "}
           <label className="mb-1 font-medium text-gray-700">
             Description
-          </label>{" "}
+          </label>
           <textarea
             name="description"
             value={form.description}
@@ -203,62 +302,59 @@ export default function AuctionManagement() {
             placeholder="Write a short description..."
             rows="4"
             className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none w-full"
-          />{" "}
-        </div>{" "}
+          />
+        </div>
+        
         <div className="flex flex-col">
-          {" "}
           <label className="mb-1 font-medium text-gray-700">
             Start Time
-          </label>{" "}
+          </label>
           <input
             type="datetime-local"
             name="start"
             value={form.start}
             onChange={handleChange}
             className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
-          />{" "}
-        </div>{" "}
+          />
+        </div>
+        
         <div className="flex flex-col">
-          {" "}
           <label className="mb-1 font-medium text-gray-700">
             End Time
-          </label>{" "}
+          </label>
           <input
             type="datetime-local"
             name="end"
             value={form.end}
             onChange={handleChange}
             className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
-          />{" "}
-        </div>{" "}
+          />
+        </div>
+        
         <div className="flex flex-col">
-          {" "}
           <label className="mb-1 font-medium text-gray-700">
             Visibility
-          </label>{" "}
+          </label>
           <select
             name="visibility"
             value={form.visibility}
             onChange={handleChange}
             className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
           >
-            {" "}
-            <option value="Draft">Draft</option>{" "}
-            <option value="Published">Published</option>{" "}
-            <option value="Archived">Archived</option>{" "}
-          </select>{" "}
-        </div>{" "}
+            <option value="Draft">Draft</option>
+            <option value="Published">Published</option>
+            <option value="Archived">Archived</option>
+          </select>
+        </div>
+        
         <div className="flex flex-col">
-          {" "}
           <label className="mb-1 font-medium text-gray-700">
-            {" "}
-            Auction Flyer{" "}
-          </label>{" "}
+            Auction Flyer
+          </label>
           <div
             onClick={() => document.getElementById("flyerUpload").click()}
             className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-blue-400 rounded-xl cursor-pointer hover:bg-blue-50 transition w-full"
           >
-            {" "}
             {form.flyer ? (
               <img
                 src={
@@ -271,7 +367,6 @@ export default function AuctionManagement() {
               />
             ) : (
               <>
-                {" "}
                 <svg
                   className="w-10 h-10 text-blue-400 mb-2"
                   fill="none"
@@ -279,43 +374,31 @@ export default function AuctionManagement() {
                   strokeWidth="2"
                   viewBox="0 0 24 24"
                 >
-                  {" "}
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6h.1a5 5 0 010 10h-1M15 13l-3-3m0 0l-3 3m3-3v12"
-                  />{" "}
-                </svg>{" "}
+                  />
+                </svg>
                 <p className="text-gray-600 text-sm">
-                  {" "}
                   Drag & drop flyer here or{" "}
-                  <span className="text-blue-500 font-medium">browse</span>{" "}
-                </p>{" "}
+                  <span className="text-blue-500 font-medium">browse</span>
+                </p>
               </>
-            )}{" "}
-          </div>{" "}
+            )}
+          </div>
           <input
             id="flyerUpload"
             type="file"
             accept="image/*"
             onChange={(e) => setForm({ ...form, flyer: e.target.files[0] })}
             className="hidden"
-          />{" "}
-        </div>{" "}
-        <div className="flex items-center space-x-3 mt-4 md:col-span-2">
-          {" "}
-          <input
-            type="checkbox"
-            checked={form.autoExtend}
-            onChange={() => setForm({ ...form, autoExtend: !form.autoExtend })}
-            className="w-5 h-5 text-blue-500 rounded"
-          />{" "}
-          <span className="text-gray-700">
-            {" "}
-            Auto-extend 5 mins if bid placed in last 5 mins{" "}
-          </span>{" "}
-        </div>{" "}
+          />
+        </div>
+        
+        
       </div>
+      
       <div className="flex gap-3 flex-wrap">
         <button
           onClick={saveAuction}
@@ -343,6 +426,7 @@ export default function AuctionManagement() {
           </button>
         )}
       </div>
+      
       {/* Auction Table */}
       <div className="mt-8 overflow-x-auto">
         {loading ? (
@@ -354,7 +438,6 @@ export default function AuctionManagement() {
                 <th className="p-3">Name</th>
                 <th className="p-3">Start</th>
                 <th className="p-3">End</th>
-
                 <th className="p-3">Visibility</th>
                 <th className="p-3">Actions</th>
               </tr>
@@ -369,7 +452,6 @@ export default function AuctionManagement() {
                   <td className="p-3">
                     {new Date(auction.endDate).toLocaleString()}
                   </td>
-
                   <td className="p-3">
                     <span
                       className={`px-3 py-1 rounded-full text-sm ${
@@ -409,14 +491,52 @@ export default function AuctionManagement() {
           </table>
         )}
       </div>
+      
+      {/* Live Auction View */}
       <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
         <h3 className="text-xl font-semibold mb-2 flex items-center">
           <Play className="mr-2 text-blue-600" /> Live Auction View
         </h3>
-        <p className="text-gray-700">
-          Real-time auction updates with live bids will be shown here.
-        </p>
+
+        {loading ? (
+          <p className="text-gray-700">Loading lots...</p>
+        ) : lots.length === 0 ? (
+          <p className="text-gray-700">No lots available.</p>
+        ) : (
+          <div className="space-y-4">
+            {lots.map((lot) => (
+              <div
+                key={lot._id}
+                className="p-4 bg-white rounded-lg shadow border border-gray-200"
+              >
+                <h4 className="font-semibold text-lg">{lot.title}</h4>
+                <p className="text-gray-600">
+                  Starting Bid: ${lot.startingBid}
+                </p>
+                <p className="text-gray-700 font-medium">
+                  Current Bids: {lot.bids?.length || 0}
+                </p>
+
+                {lot.bids && lot.bids.length > 0 && (
+                  <ul className="mt-2 text-sm text-gray-600 list-disc list-inside">
+                    {lot.bids.map((bid, idx) => {
+                      const bidderInfo = getBidderInfo(bid);
+                      
+                      return (
+                        <li key={idx}>
+                          <span className="font-semibold">{bidderInfo.name}</span>{" "}
+                          (#{bidderInfo.biddingNumber}) — ${bidderInfo.amount}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+      
       {/* Delete Confirmation Modal */}
       {deleteId && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
