@@ -155,7 +155,7 @@ export default function BidderManagement() {
               <th className="p-3">Email</th>
               <th className="p-3">Bidder #</th>
               <th className="p-3">Status</th>
-              <th className="p-3">IP</th>
+              
 
               <th className="p-3">Actions</th>
             </tr>
@@ -181,7 +181,7 @@ export default function BidderManagement() {
                     {b.isSuspended ? "Suspended" : "Active"}
                   </span>
                 </td>
-                <td className="p-3">{b.ip}</td>
+                
 
                 <td className="p-3 flex space-x-3">
                   <button
