@@ -317,7 +317,7 @@ export default function PaymentsReporting() {
             <Button
               size="sm"
               variant="ghost"
-              className="absolute top-4 right-3"
+              className="absolute top-5 right-3"
               onClick={handleCloseInvoice}
             >
               <X className="w-4 h-4" />
