@@ -61,12 +61,12 @@ export default function PrivacyPolicy() {
         </h2>
         <p className="text-gray-700 mb-4">
           You have the right to access, update, or delete your personal
-          information. To exercise these rights, please contact us at{" "}
+          information. To exercise these rights, please {" "}
           <a
-            href="mailto:support@thebuckersauction.com"
+            href="/contact"
             className="text-[#335566] underline"
           >
-            support@thebuckersauction.com
+            Contact us
           </a>.
         </p>
 
@@ -82,13 +82,12 @@ export default function PrivacyPolicy() {
           7. Contact Us
         </h2>
         <p className="text-gray-700">
-          If you have any questions about this Privacy Policy, please contact us
-          at{" "}
+          If you have any questions about this Privacy Policy, please {" "}
           <a
-            href="mailto:support@thebuckersauction.com"
+            href="/contact"
             className="text-[#335566] underline"
           >
-            support@thebuckersauction.com
+            Contact us
           </a>.
         </p>
       </div>

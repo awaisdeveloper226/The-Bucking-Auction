@@ -39,10 +39,11 @@ export default function ServicesPage() {
 
         {/* Service Card 2 */}
         <div className="bg-white shadow-lg rounded-lg p-6 text-center border-t-4 border-[#6ED0CE] hover:shadow-2xl transition duration-300">
-          <h2 className="text-xl font-semibold mb-4">Auction Alerts</h2>
+          <h2 className="text-xl font-semibold mb-4">Auction Tracking</h2>
           <p className="text-gray-600">
-            Stay ahead with instant alerts on new auctions, bidding activity,
-            and last-minute updates so you never miss out.
+            Monitor your favorite lots and track live bidding activity with
+            Buckers Auction, so you can make confident bids and secure your
+            wins.
           </p>
         </div>
 
