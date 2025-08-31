@@ -57,6 +57,12 @@ export default function AuctionManagement() {
     return data.secure_url;
   };
 
+  const toLocalISOString = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const offset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+  };
   const resetForm = () => {
     setForm({
       name: "",
@@ -80,12 +86,16 @@ export default function AuctionManagement() {
       if (form.flyer instanceof File) flyerUrl = await uploadFlyer(form.flyer);
       else if (typeof form.flyer === "string") flyerUrl = form.flyer;
 
+      // Convert local datetime to UTC for storage
+      const startUTC = new Date(form.start).toISOString();
+      const endUTC = new Date(form.end).toISOString();
+
       const payload = {
         title: form.name,
         description: form.description,
         flyer: flyerUrl,
-        startDate: form.start,
-        endDate: form.end,
+        startDate: startUTC, // Use UTC time
+        endDate: endUTC, // Use UTC time
         startingBid: Number(form.reserve),
         status: form.visibility.toLowerCase(),
         autoExtend: form.autoExtend,
@@ -137,19 +147,13 @@ export default function AuctionManagement() {
     setForm({
       name: auction.title,
       description: auction.description,
-      start: auction.startDate
-        ? new Date(auction.startDate).toISOString().slice(0, 16)
-        : "",
-      end: auction.endDate
-        ? new Date(auction.endDate).toISOString().slice(0, 16)
-        : "",
-      
+      start: toLocalISOString(auction.startDate),
+      end: toLocalISOString(auction.endDate),
       visibility:
         auction.status.charAt(0).toUpperCase() + auction.status.slice(1),
       autoExtend: auction.autoExtend,
       flyer: auction.flyer || null,
     });
-
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -227,7 +231,6 @@ export default function AuctionManagement() {
             className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
           />{" "}
         </div>{" "}
-       {" "}
         <div className="flex flex-col">
           {" "}
           <label className="mb-1 font-medium text-gray-700">
@@ -351,7 +354,7 @@ export default function AuctionManagement() {
                 <th className="p-3">Name</th>
                 <th className="p-3">Start</th>
                 <th className="p-3">End</th>
-                
+
                 <th className="p-3">Visibility</th>
                 <th className="p-3">Actions</th>
               </tr>
@@ -366,7 +369,7 @@ export default function AuctionManagement() {
                   <td className="p-3">
                     {new Date(auction.endDate).toLocaleString()}
                   </td>
-                 
+
                   <td className="p-3">
                     <span
                       className={`px-3 py-1 rounded-full text-sm ${
@@ -406,8 +409,6 @@ export default function AuctionManagement() {
           </table>
         )}
       </div>
-
-      
       <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
         <h3 className="text-xl font-semibold mb-2 flex items-center">
           <Play className="mr-2 text-blue-600" /> Live Auction View

@@ -14,7 +14,7 @@ import AuctionManagement from "@/components/AuctionManagement";
 import LotManagement from "@/components/LotManagement";
 import BidderManagement from "@/components/BidderManagement";
 import PaymentsReporting from "@/components/Payments";
-import NotificationsManagement from "@/components/Notifications";
+
 import UserInquiries from "@/components/UserInquiries";
 import { useRouter } from "next/navigation";
 
@@ -50,7 +50,7 @@ export default function AdminPanel() {
     { id: "lots", label: "Lot Management", icon: <Package size={20} /> },
     { id: "bidders", label: "Bidder Management", icon: <Users size={20} /> },
     { id: "payments", label: "Payments & Reporting", icon: <DollarSign size={20} /> },
-    { id: "notifications", label: "Notifications", icon: <Bell size={20} /> },
+    
     { id: "inquiries", label: "User Inquiries", icon: <Mail size={20} /> },
   ];
 
@@ -79,8 +79,7 @@ export default function AdminPanel() {
         return <BidderManagement />;
       case "payments":
         return <PaymentsReporting />;
-      case "notifications":
-        return <NotificationsManagement />;
+    
       case "inquiries":
         return <UserInquiries />;
       default:

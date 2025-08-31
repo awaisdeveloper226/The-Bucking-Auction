@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Ban, CheckCircle, Trash2, Edit2, X, Unlock,Eye } from "lucide-react";
+import { Ban, CheckCircle, Trash2, Edit2, X, Unlock, Eye } from "lucide-react";
 
 export default function BidderManagement() {
   const [bidders, setBidders] = useState([]);
@@ -83,8 +83,7 @@ export default function BidderManagement() {
     }
   };
 
-  const overrideBid = (id) => alert(`Bid overridden for bidder #${id}`);
-  const proxyBid = (id) => alert(`Proxy bid placed for bidder #${id}`);
+
 
   const handleDelete = async () => {
     if (!deleteBidderId) return;
@@ -157,7 +156,7 @@ export default function BidderManagement() {
               <th className="p-3">Bidder #</th>
               <th className="p-3">Status</th>
               <th className="p-3">IP</th>
-              <th className="p-3">Last Activity</th>
+
               <th className="p-3">Actions</th>
             </tr>
           </thead>
@@ -183,7 +182,7 @@ export default function BidderManagement() {
                   </span>
                 </td>
                 <td className="p-3">{b.ip}</td>
-                <td className="p-3">{b.lastActivity}</td>
+
                 <td className="p-3 flex space-x-3">
                   <button
                     onClick={() =>
@@ -200,20 +199,7 @@ export default function BidderManagement() {
                       <Ban size={18} />
                     )}
                   </button>
-                  <button
-                    onClick={() => overrideBid(b.id)}
-                    className="text-blue-500 hover:text-blue-700"
-                    title="Override Bid"
-                  >
-                    <Edit2 size={18} />
-                  </button>
-                  <button
-                    onClick={() => proxyBid(b.id)}
-                    className="text-green-500 hover:text-green-700"
-                    title="Proxy Bid"
-                  >
-                    <CheckCircle size={18} />
-                  </button>
+
                   <button
                     onClick={() => setDeleteBidderId(b.id)}
                     className="text-gray-500 hover:text-gray-700"

@@ -29,8 +29,48 @@ export async function GET(req, { params }) {
 export async function PATCH(req, { params }) {
   try {
     await connectToDB();
-    const { bid } = await req.json();
+    const body = await req.json();
     const { lotId } = params;
+
+    // -------------------------
+    // CASE 1: Finalize auction
+    // -------------------------
+    if (body.winnerId && body.winningBid) {
+      const lot = await Lot.findByIdAndUpdate(
+        lotId,
+        {
+          winnerId: body.winnerId,
+          winningBid: body.winningBid,
+          soldAt: body.soldAt || new Date(),
+          status: "sold",
+        },
+        { new: true }
+      ).populate(
+        "bids.userId",
+        "biddingNumber firstName lastName emailAddress"
+      );
+
+      if (!lot) {
+        return new Response(JSON.stringify({ error: "Lot not found" }), {
+          status: 404,
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true, lot }), {
+        status: 200,
+      });
+    }
+
+    // -------------------------
+    // CASE 2: Place a bid
+    // -------------------------
+    const { bid } = body;
+    if (!bid) {
+      return new Response(
+        JSON.stringify({ error: "Missing bid or finalization data" }),
+        { status: 400 }
+      );
+    }
 
     // 1. Validate user
     const user = await User.findById(bid.userId);
@@ -64,7 +104,6 @@ export async function PATCH(req, { params }) {
     await lot.save();
 
     // 6. Repopulate bids with biddingNumber for frontend
-    // PATCH response
     const populatedLot = await Lot.findById(lotId).populate(
       "bids.userId",
       "biddingNumber firstName lastName emailAddress"
@@ -76,10 +115,6 @@ export async function PATCH(req, { params }) {
       JSON.stringify({ success: true, bid: newBid, lot: populatedLot }),
       { status: 200 }
     );
-
-    return new Response(JSON.stringify({ success: true, lot: populatedLot }), {
-      status: 200,
-    });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,

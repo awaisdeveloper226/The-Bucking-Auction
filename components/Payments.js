@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,26 +10,109 @@ import autoTable from "jspdf-autotable";
 export default function PaymentsReporting() {
   const [search, setSearch] = useState("");
   const [taxPercent, setTaxPercent] = useState(5); // Dynamic tax %
-  const [lots, setLots] = useState([
-    { id: 1, lot: "Lot #101", status: "Paid", buyer: "John Doe", price: 1200 },
-    { id: 2, lot: "Lot #102", status: "Unpaid", buyer: "Jane Smith", price: 800 },
-    { id: 3, lot: "Lot #103", status: "Paid", buyer: "David Miller", price: 950 },
-  ]);
+  const [lots, setLots] = useState([]);
+
+  useEffect(() => {
+    const fetchLots = async () => {
+      try {
+        const res = await fetch("/api/lots");
+        const data = await res.json();
+
+        // ✅ filter only lots with winning information
+        const filtered = data.filter(
+          (lot) =>
+            (lot.winnerId && lot.winnerId !== null) ||
+            (lot.winningBid && lot.winningBid > 0) ||
+            (lot.soldAt && lot.soldAt !== null)
+        );
+
+        // ✅ resolve buyer names
+        const formatted = await Promise.all(
+          filtered.map(async (lot) => {
+            let buyerName = "Unknown Buyer";
+            let buyerEmail = "No email";
+            let buyerAddress = "No address";
+
+            if (lot.winnerId) {
+              if (typeof lot.winnerId === "object" && lot.winnerId.name) {
+                // Already populated
+                buyerName = lot.winnerId.name;
+              } else if (typeof lot.winnerId === "string") {
+                // Need to fetch user by ID
+                try {
+                  const userRes = await fetch(`/api/users/${lot.winnerId}`);
+                  if (userRes.ok) {
+                    const user = await userRes.json();
+                    buyerName =
+                      `${user.firstName} ${user.lastName} ` || buyerName;
+                    buyerEmail = user.emailAddress || "No email";
+                    buyerAddress = user.physicalAddress || "No address";
+                  }
+                } catch (err) {
+                  console.error(`Failed to fetch user ${lot.winnerId}`, err);
+                }
+              }
+            }
+
+            return {
+              id: lot._id,
+              lot: lot.title || `Lot #${lot.order}`,
+              status: lot.paymentStatus || "Unpaid", // ✅ use actual DB value
+
+              buyer: buyerName,
+              price: lot.winningBid || 0,
+              email: buyerEmail || "No email",
+              address: buyerAddress || "No address",
+            };
+          })
+        );
+
+        setLots(formatted);
+      } catch (error) {
+        console.error("Error fetching lots:", error);
+      }
+    };
+
+    fetchLots();
+  }, []);
+
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   const summary = {
     totalLots: lots.length,
-    totalSales: lots.reduce((acc, lot) => acc + lot.price, 0),
-    avgPrice: Math.round(
-      lots.reduce((acc, lot) => acc + lot.price, 0) / lots.length
-    ),
-    highestBid: Math.max(...lots.map((lot) => lot.price)),
+    totalSales: lots.reduce(
+      (acc, lot) => acc + (lot.status === "Paid" ? lot.price : 0),
+      0
+    ), // ✅ only count paid sales
+    avgPrice:
+      lots.length > 0
+        ? Math.round(
+            lots.reduce(
+              (acc, lot) => acc + (lot.status === "Paid" ? lot.price : 0),
+              0
+            ) / lots.length
+          )
+        : 0,
+    highestBid: lots.length > 0 ? Math.max(...lots.map((lot) => lot.price)) : 0,
   };
 
-  const handleMarkPaid = (id) => {
-    setLots((prev) =>
-      prev.map((lot) => (lot.id === id ? { ...lot, status: "Paid" } : lot))
-    );
+  const handleMarkPaid = async (id) => {
+    try {
+      const res = await fetch(`/api/lots?id=${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentStatus: "Paid" }), // ✅ must match schema
+      });
+
+      if (res.ok) {
+        const updatedLot = await res.json();
+        setLots((prev) =>
+          prev.map((lot) => (lot.id === id ? { ...lot, status: "Paid" } : lot))
+        );
+      }
+    } catch (err) {
+      console.error("Failed to update payment status:", err);
+    }
   };
 
   const handleShowInvoice = (lot) => {
@@ -43,43 +126,55 @@ export default function PaymentsReporting() {
   const handleDownloadPDF = (invoice) => {
     const doc = new jsPDF();
 
+    // Format invoice number (strip Mongo ID, just use last 6 chars or pad with zeros)
+    const shortInvoiceId =
+      typeof invoice.id === "string"
+        ? invoice.id.slice(-6).toUpperCase() // last 6 chars of Mongo ID
+        : invoice.id.toString().padStart(4, "0");
+
     // Company Header
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
     doc.text("The Bucking Auction", 14, 20);
+
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100);
-    doc.text("dummy address for now", 14, 28);
-    doc.text("support@cthebuckingauction.com", 14, 34);
+    doc.text("support@thebuckingauction.com", 14, 26); // shifted up (was 34)
 
     // Invoice Info
     doc.setFontSize(14);
     doc.setTextColor(50);
     doc.setFont("helvetica", "bold");
     doc.text("INVOICE", 150, 20);
+
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
-    doc.text(`Invoice #: ${invoice.id.toString().padStart(4, "0")}`, 150, 28);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 150, 34);
+    doc.text(`Invoice #: ${shortInvoiceId}`, 150, 26);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 150, 32);
 
     // Buyer Info
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    doc.text("Bill To:", 14, 50);
+    doc.text("Bill To:", 14, 42);
+
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
-    doc.text(invoice.buyer, 14, 56);
-    doc.text("buyer@email.com", 14, 62);
+    doc.text(invoice.buyer, 14, 48);
+    doc.text(invoice.email, 14, 54);
 
     // Invoice Table
     autoTable(doc, {
-      startY: 75,
+      startY: 68,
       head: [["Lot", "Price ($)"]],
       body: [[invoice.lot, `$${invoice.price}`]],
       styles: { halign: "right", font: "helvetica", fontSize: 11 },
-      headStyles: { fillColor: [240, 240, 240], textColor: 20, halign: "center" },
-      columnStyles: { 0: { halign: "left" }, 1: { halign: "right" } },
+      headStyles: {
+        fillColor: [240, 240, 240],
+        textColor: 20,
+        halign: "center",
+      },
+      columnStyles: { 0: { halign: "center" }, 1: { halign: "center" } },
     });
 
     // Totals
@@ -91,6 +186,7 @@ export default function PaymentsReporting() {
     doc.setFont("helvetica", "normal");
     doc.text(`Subtotal: $${invoice.price}`, 150, finalY);
     doc.text(`Tax (${taxPercent}%): $${taxAmount}`, 150, finalY + 6);
+
     doc.setFontSize(13);
     doc.setFont("helvetica", "bold");
     doc.text(`Total: $${totalAmount}`, 150, finalY + 14);
@@ -100,7 +196,7 @@ export default function PaymentsReporting() {
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100);
     doc.text(
-      "Thank you for your business! Please contact support@coretech.com for queries.",
+      "Thank you for your business! Please contact support@thebuckingauction.com for queries.",
       105,
       290,
       { align: "center" }
@@ -240,15 +336,18 @@ export default function PaymentsReporting() {
                 <h2 className="text-3xl font-bold text-gray-900">
                   The Bucking Auction
                 </h2>
+
                 <p className="text-gray-500 text-sm">
-                  Dummy Address for now
+                  support@thebuckingauction.com
                 </p>
-                <p className="text-gray-500 text-sm">support@thebuckingauction.com</p>
               </div>
               <div className="text-right">
                 <h3 className="text-xl font-semibold">INVOICE</h3>
                 <p className="text-gray-500">
-                  #{selectedInvoice.id.toString().padStart(4, "0")}
+                  #
+                  {typeof selectedInvoice.id === "string"
+                    ? selectedInvoice.id.slice(-6).toUpperCase() // last 6 chars of Mongo ID
+                    : selectedInvoice.id.toString().padStart(4, "0")}
                 </p>
                 <p className="text-gray-500">
                   {new Date().toLocaleDateString()}
@@ -260,9 +359,8 @@ export default function PaymentsReporting() {
             <div className="mb-6 bg-gray-50 p-4 rounded-lg border">
               <p className="font-semibold text-gray-700">Bill To:</p>
               <p className="text-gray-800">{selectedInvoice.buyer}</p>
-              <p className="text-gray-500 text-sm">
-                Customer Email: buyer@email.com
-              </p>
+              <p className="text-gray-500 text-sm">{selectedInvoice.email}</p>
+              <p className="text-gray-500 text-sm">{selectedInvoice.address}</p>
             </div>
 
             {/* Invoice Table */}
@@ -288,9 +386,7 @@ export default function PaymentsReporting() {
               <div className="w-1/2 sm:w-1/3">
                 <div className="flex justify-between py-1">
                   <span className="text-gray-600">Subtotal:</span>
-                  <span className="font-medium">
-                    ${selectedInvoice.price}
-                  </span>
+                  <span className="font-medium">${selectedInvoice.price}</span>
                 </div>
                 <div className="flex justify-between py-1">
                   <span className="text-gray-600">Tax ({taxPercent}%):</span>
@@ -302,10 +398,9 @@ export default function PaymentsReporting() {
                   <span>Total:</span>
                   <span>
                     $
-                    {(
-                      selectedInvoice.price *
-                      (1 + taxPercent / 100)
-                    ).toFixed(2)}
+                    {(selectedInvoice.price * (1 + taxPercent / 100)).toFixed(
+                      2
+                    )}
                   </span>
                 </div>
               </div>
@@ -317,7 +412,7 @@ export default function PaymentsReporting() {
                 size="sm"
                 variant="default"
                 onClick={() => handleDownloadPDF(selectedInvoice)}
-                className='bg-blue-300'
+                className="bg-blue-300"
               >
                 Download PDF
               </Button>
@@ -326,8 +421,8 @@ export default function PaymentsReporting() {
             {/* Footer */}
             <div className="text-center text-gray-500 text-sm border-t pt-3">
               Thank you for your business! Please contact{" "}
-              <span className="font-medium">support@thebuckingauction.com</span> for
-              queries.
+              <span className="font-medium">support@thebuckingauction.com</span>{" "}
+              for queries.
             </div>
           </div>
         </div>

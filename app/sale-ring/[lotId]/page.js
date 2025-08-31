@@ -243,13 +243,17 @@ export default function LotDetailsPage() {
   // ----- Countdown Timer -----
   useEffect(() => {
     if (!auction?.endDate) return;
+
     const timer = setInterval(() => {
-      const now = Date.now();
-      const distance = new Date(auction.endDate).getTime() - now;
+      const now = new Date();
+      // Parse the UTC time from the database
+      const endTime = new Date(auction.endDate);
+      const distance = endTime.getTime() - now.getTime();
 
       if (distance <= 0) {
         setTimeLeft("Auction Ended");
         clearInterval(timer);
+        finalizeAuction();
       } else {
         const days = Math.floor(distance / (1000 * 60 * 60 * 24));
         const hours = Math.floor((distance / (1000 * 60 * 60)) % 24);
@@ -262,6 +266,7 @@ export default function LotDetailsPage() {
         );
       }
     }, 1000);
+
     return () => clearInterval(timer);
   }, [auction]);
 
@@ -551,11 +556,7 @@ export default function LotDetailsPage() {
             <p className="text-sm text-gray-500 mt-1">
               Starting Bid: ${lotData.startingBid}
             </p>
-            {totalBids > 0 && (
-              <p className="text-sm text-gray-500 mt-1">
-                Total Bids: {totalBids}
-              </p>
-            )}
+            
             {auction && (
               <>
                 <p className="text-sm text-gray-500 mt-1">

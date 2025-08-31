@@ -53,6 +53,9 @@ const UserSchema = new Schema(
       default: false,
     },
 
+    ipAddress: { type: String, default: "" },
+
+
     isSuspended: {
       type: Boolean,
       default: false,

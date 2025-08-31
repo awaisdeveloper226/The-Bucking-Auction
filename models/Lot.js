@@ -73,6 +73,13 @@ const LotSchema = new mongoose.Schema({
   order: { type: Number, default: 0, min: [0, 'Order cannot be negative'] },
   status: { type: String, enum: ['active', 'sold', 'withdrawn', 'pending'], default: 'active' },
 
+  paymentStatus: {
+  type: String,
+  enum: ["Unpaid", "Paid"],
+  default: "Unpaid"
+},
+
+
   // Winner info
   winnerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   winningBid: { type: Number, default: 0, min: [0, 'Winning bid cannot be negative'] },

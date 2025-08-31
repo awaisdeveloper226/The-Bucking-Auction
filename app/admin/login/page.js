@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false); // Track login state
   const router = useRouter();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
       const res = await fetch('/api/admin', {
@@ -29,6 +31,8 @@ export default function LoginPage() {
     } catch (error) {
       console.error(error);
       alert('Something went wrong. Try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -52,8 +56,12 @@ export default function LoginPage() {
           required
           className="border p-2 rounded"
         />
-        <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-          Login
+        <button
+          type="submit"
+          disabled={loading}
+          className={`p-2 rounded text-white ${loading ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'}`}
+        >
+          {loading ? 'Logging in...' : 'Login'}
         </button>
       </form>
     </div>
