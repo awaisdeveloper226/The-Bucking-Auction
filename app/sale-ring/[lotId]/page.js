@@ -530,31 +530,18 @@ export default function LotDetailsPage() {
             <div className="relative mb-6">
               {/* Display Photos */}
               {lotData.photos?.length > 0 && (
-                <>
-                  <Image
-                    src={lotData.photos[currentPhotoIndex]}
-                    alt={`${lotData.title} - Photo ${currentPhotoIndex + 1}`}
-                    width={800}
-                    height={500}
-                    className="rounded-xl shadow-lg w-full object-contain"
-                  />
-                  {lotData.photos.length > 1 && (
-                    <>
-                      <button
-                        onClick={prevPhoto}
-                        className="absolute left-4 top-52 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"
-                      >
-                        ‹
-                      </button>
-                      <button
-                        onClick={nextPhoto}
-                        className="absolute right-4 top-52 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"
-                      >
-                        ›
-                      </button>
-                    </>
-                  )}
-                </>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {lotData.photos.map((photo, index) => (
+                    <Image
+                      key={index}
+                      src={photo}
+                      alt={`${lotData.title} - Photo ${index + 1}`}
+                      width={800}
+                      height={500}
+                      className="rounded-xl shadow-lg w-full object-contain"
+                    />
+                  ))}
+                </div>
               )}
 
               {/* Display Videos */}
@@ -697,7 +684,6 @@ export default function LotDetailsPage() {
                 >
                   Time Left: {timeLeft || "Loading..."}
                 </p>
-                
               </>
             )}
           </div>
