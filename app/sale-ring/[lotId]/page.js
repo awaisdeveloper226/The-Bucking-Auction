@@ -530,7 +530,7 @@ export default function LotDetailsPage() {
             <div className="relative mb-6">
               {/* Display Photos */}
               {lotData.photos?.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-6">
                   {lotData.photos.map((photo, index) => (
                     <Image
                       key={index}
