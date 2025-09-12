@@ -180,11 +180,15 @@ export default function HomePage() {
                 <div className="relative">
                   {lot.photos?.[0] && (
                     <Image
-                      src={lot.photos[0]}
+                      src={lot.photos[0].replace(
+                        "/upload/",
+                        "/upload/f_auto,q_auto,w_400/"
+                      )}
                       alt={lot.title}
                       width={400}
                       height={280}
                       className="w-full h-48 object-contain group-hover:scale-105 transition-transform"
+                      loading="lazy"
                     />
                   )}
                   <span

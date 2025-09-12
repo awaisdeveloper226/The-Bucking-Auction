@@ -222,7 +222,7 @@ export default function AuctionManagement() {
   // Helper function to get bidder info with better error handling
   const getBidderInfo = (bid) => {
     let userId = "";
-    
+
     try {
       // Handle different possible formats of bid.user
       if (typeof bid.user === "object" && bid.user !== null) {
@@ -234,7 +234,7 @@ export default function AuctionManagement() {
       } else if (bid.user) {
         userId = String(bid.user);
       }
-      
+
       // Also try bid.userId if bid.user doesn't exist
       if (!userId && bid.userId) {
         if (typeof bid.userId === "object" && bid.userId !== null) {
@@ -253,20 +253,25 @@ export default function AuctionManagement() {
 
     // Try to find user in bidders map
     const user = bidders[userId];
-    
+
     if (user) {
       return {
         name: user.name,
         biddingNumber: user.biddingNumber || "N/A",
-        amount: bid.amount
+        amount: bid.amount,
       };
     } else {
       // Log for debugging
-      console.log("User not found for ID:", userId, "Available bidder IDs:", Object.keys(bidders));
+      console.log(
+        "User not found for ID:",
+        userId,
+        "Available bidder IDs:",
+        Object.keys(bidders)
+      );
       return {
         name: "Unknown User",
-        biddingNumber: "N/A", 
-        amount: bid.amount
+        biddingNumber: "N/A",
+        amount: bid.amount,
       };
     }
   };
@@ -274,13 +279,11 @@ export default function AuctionManagement() {
   return (
     <div className="p-4 md:p-6 bg-white rounded-2xl shadow-md space-y-6 relative">
       <h2 className="text-2xl font-bold mb-6">Auction Management</h2>
-      
+
       {/* Auction Form */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="flex flex-col">
-          <label className="mb-1 font-medium text-gray-700">
-            Auction Name
-          </label>
+          <label className="mb-1 font-medium text-gray-700">Auction Name</label>
           <input
             type="text"
             name="name"
@@ -290,11 +293,9 @@ export default function AuctionManagement() {
             className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
           />
         </div>
-        
+
         <div className="flex flex-col md:col-span-2">
-          <label className="mb-1 font-medium text-gray-700">
-            Description
-          </label>
+          <label className="mb-1 font-medium text-gray-700">Description</label>
           <textarea
             name="description"
             value={form.description}
@@ -304,11 +305,9 @@ export default function AuctionManagement() {
             className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none w-full"
           />
         </div>
-        
+
         <div className="flex flex-col">
-          <label className="mb-1 font-medium text-gray-700">
-            Start Time
-          </label>
+          <label className="mb-1 font-medium text-gray-700">Start Time</label>
           <input
             type="datetime-local"
             name="start"
@@ -317,11 +316,9 @@ export default function AuctionManagement() {
             className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
           />
         </div>
-        
+
         <div className="flex flex-col">
-          <label className="mb-1 font-medium text-gray-700">
-            End Time
-          </label>
+          <label className="mb-1 font-medium text-gray-700">End Time</label>
           <input
             type="datetime-local"
             name="end"
@@ -330,11 +327,9 @@ export default function AuctionManagement() {
             className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full"
           />
         </div>
-        
+
         <div className="flex flex-col">
-          <label className="mb-1 font-medium text-gray-700">
-            Visibility
-          </label>
+          <label className="mb-1 font-medium text-gray-700">Visibility</label>
           <select
             name="visibility"
             value={form.visibility}
@@ -346,7 +341,7 @@ export default function AuctionManagement() {
             <option value="Archived">Archived</option>
           </select>
         </div>
-        
+
         <div className="flex flex-col">
           <label className="mb-1 font-medium text-gray-700">
             Auction Flyer
@@ -360,10 +355,16 @@ export default function AuctionManagement() {
                 src={
                   form.flyer instanceof File
                     ? URL.createObjectURL(form.flyer)
+                    : form.flyer?.includes("/upload/")
+                    ? form.flyer.replace(
+                        "/upload/",
+                        "/upload/f_auto,q_auto,w_400/"
+                      )
                     : form.flyer
                 }
                 alt="Flyer Preview"
-                className="h-40 w-auto rounded-lg shadow-md"
+                className="h-40 w-auto rounded-lg shadow-md object-contain"
+                loading="lazy"
               />
             ) : (
               <>
@@ -395,10 +396,8 @@ export default function AuctionManagement() {
             className="hidden"
           />
         </div>
-        
-        
       </div>
-      
+
       <div className="flex gap-3 flex-wrap">
         <button
           onClick={saveAuction}
@@ -426,7 +425,7 @@ export default function AuctionManagement() {
           </button>
         )}
       </div>
-      
+
       {/* Auction Table */}
       <div className="mt-8 overflow-x-auto">
         {loading ? (
@@ -491,7 +490,7 @@ export default function AuctionManagement() {
           </table>
         )}
       </div>
-      
+
       {/* Live Auction View */}
       <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
         <h3 className="text-xl font-semibold mb-2 flex items-center">
@@ -521,10 +520,12 @@ export default function AuctionManagement() {
                   <ul className="mt-2 text-sm text-gray-600 list-disc list-inside">
                     {lot.bids.map((bid, idx) => {
                       const bidderInfo = getBidderInfo(bid);
-                      
+
                       return (
                         <li key={idx}>
-                          <span className="font-semibold">{bidderInfo.name}</span>{" "}
+                          <span className="font-semibold">
+                            {bidderInfo.name}
+                          </span>{" "}
                           (#{bidderInfo.biddingNumber}) — ${bidderInfo.amount}
                         </li>
                       );
@@ -536,7 +537,7 @@ export default function AuctionManagement() {
           </div>
         )}
       </div>
-      
+
       {/* Delete Confirmation Modal */}
       {deleteId && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">

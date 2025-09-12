@@ -519,12 +519,25 @@ export default function LotDetailsPage() {
             <div className="rounded-xl overflow-hidden shadow-lg border border-gray-200">
               <video
                 key={liveStream}
-                src={liveStream}
                 controls
                 autoPlay
                 muted
+                preload="metadata"
                 className="w-full h-[400px] bg-black"
-              />
+              >
+                <source
+                  src={
+                    liveStream?.includes("/upload/")
+                      ? liveStream.replace(
+                          "/upload/",
+                          "/upload/f_auto,q_auto,vc_auto,w_800/"
+                        )
+                      : liveStream
+                  }
+                  type="video/mp4"
+                />
+                Your browser does not support the video tag.
+              </video>
             </div>
           ) : lotData.photos?.length > 0 || lotData.videos?.length > 0 ? (
             <div className="relative mb-6">
@@ -534,11 +547,15 @@ export default function LotDetailsPage() {
                   {lotData.photos.map((photo, index) => (
                     <Image
                       key={index}
-                      src={photo}
+                      src={photo.replace(
+                        "/upload/",
+                        "/upload/f_auto,q_auto,w_800/"
+                      )}
                       alt={`${lotData.title} - Photo ${index + 1}`}
                       width={800}
                       height={500}
                       className="rounded-xl shadow-lg w-full object-contain"
+                      loading="lazy"
                     />
                   ))}
                 </div>
@@ -549,10 +566,20 @@ export default function LotDetailsPage() {
                 <div className="mt-4">
                   <video
                     key={currentVideoIndex}
-                    src={lotData.videos[currentVideoIndex]}
                     controls
+                    preload="metadata"
                     className="w-full h-[400px] rounded-xl shadow-lg object-cover"
-                  />
+                  >
+                    <source
+                      src={lotData.videos[currentVideoIndex]?.replace(
+                        "/upload/",
+                        "/upload/f_auto,q_auto,vc_auto,w_800/"
+                      )}
+                      type="video/mp4"
+                    />
+                    Your browser does not support the video tag.
+                  </video>
+
                   {lotData.videos.length > 1 && (
                     <div className="flex justify-between mt-2">
                       <button

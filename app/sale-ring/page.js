@@ -95,11 +95,15 @@ export default function SaleRingPage() {
             {auction.flyer && (
               <div className="mt-4 flex justify-center">
                 <Image
-                  src={auction.flyer}
+                  src={auction.flyer.replace(
+                    "/upload/",
+                    "/upload/f_auto,q_auto,w_600/"
+                  )}
                   alt={auction.title}
                   width={600}
                   height={400}
                   className="rounded-lg shadow-lg"
+                  loading="lazy"
                 />
               </div>
             )}
@@ -155,11 +159,15 @@ export default function SaleRingPage() {
               <div className="relative">
                 {lot.photos?.[0] && (
                   <Image
-                    src={lot.photos[0]}
+                    src={lot.photos[0].replace(
+                      "/upload/",
+                      "/upload/f_auto,q_auto,w_400/"
+                    )}
                     alt={lot.title}
                     width={400}
                     height={280}
                     className="w-full h-48 object-contain group-hover:scale-105 transition-transform"
+                    loading="lazy"
                   />
                 )}
                 <span

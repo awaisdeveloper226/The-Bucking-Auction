@@ -484,9 +484,17 @@ export default function LotManagement() {
                 <div key={index} className="relative group">
                   <div className="relative w-full h-full bg-gray-200 rounded-lg border overflow-hidden">
                     <img
-                      src={photo}
+                      src={
+                        photo?.includes("/upload/")
+                          ? photo.replace(
+                              "/upload/",
+                              "/upload/f_auto,q_auto,w_600/"
+                            )
+                          : photo
+                      }
                       alt={`Photo ${index + 1}`}
                       className="w-full h-full object-contain"
+                      loading="lazy"
                     />
                   </div>
                   <button
@@ -531,7 +539,25 @@ export default function LotManagement() {
               {form.videos.map((video, index) => (
                 <div key={index} className="relative group">
                   <div className="relative w-full h-24 bg-gray-200 rounded-lg border overflow-hidden">
-                    <video src={video} className="w-full h-full object-cover" />
+                    <video
+                      controls
+                      preload="metadata"
+                      className="w-full h-full object-cover"
+                    >
+                      <source
+                        src={
+                          video?.includes("/upload/")
+                            ? video.replace(
+                                "/upload/",
+                                "/upload/f_auto,q_auto,vc_auto,w_800/"
+                              )
+                            : video
+                        }
+                        type="video/mp4"
+                      />
+                      Your browser does not support the video tag.
+                    </video>
+
                     <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
                       <Play className="text-white" size={24} />
                     </div>
@@ -611,11 +637,17 @@ export default function LotManagement() {
                             {/* Display first photo or placeholder */}
                             <img
                               src={
-                                lot.photos?.[0] ||
-                                "https://via.placeholder.com/80"
+                                lot.photos?.[0]?.includes("/upload/")
+                                  ? lot.photos[0].replace(
+                                      "/upload/",
+                                      "/upload/f_auto,q_auto,w_200,h_200,c_fill/"
+                                    )
+                                  : lot.photos?.[0] ||
+                                    "https://via.placeholder.com/80"
                               }
                               alt={lot.title}
                               className="w-20 h-20 object-cover rounded mb-2 md:mb-0"
+                              loading="lazy"
                             />
 
                             <div className="flex-1 min-w-[150px]">
